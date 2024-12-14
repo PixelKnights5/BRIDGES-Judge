@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "bridges-judge",
+  "version": "${version}",
+  "name": "BRIDGES Judgificator",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "LGPL-3.0",
+  "icon": "assets/bridges-judge/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.pixelknights.bridgesgame.client.BridgesJudgeClient"
+    ],
+    "main": [
+      "com.pixelknights.bridgesgame.BridgesJudge"
+    ]
+  },
+  "mixins": [
+    "bridges-judge.mixins.json",
+    {
+      "config": "bridges-judge.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-language-kotlin": ">=${kotlin_loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
