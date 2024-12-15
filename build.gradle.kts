@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.1.0"
-    id("fabric-loom") version "1.9.1"
+    id("fabric-loom") version "1.9-SNAPSHOT"
     id("maven-publish")
 }
 
@@ -50,6 +50,8 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:${project.property("kotlin_loader_version")}")
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
+
+    testImplementation("net.fabricmc:fabric-loader-junit:${project.property("loader_version")}")
 }
 
 tasks.processResources {
@@ -85,6 +87,11 @@ tasks.jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName}" }
     }
+}
+
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 // configure the maven publication
