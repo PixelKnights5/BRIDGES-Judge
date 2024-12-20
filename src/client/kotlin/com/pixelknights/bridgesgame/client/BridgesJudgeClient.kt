@@ -2,6 +2,7 @@ package com.pixelknights.bridgesgame.client
 
 import com.pixelknights.bridgesgame.client.command.registerJudgeGameCommand
 import com.pixelknights.bridgesgame.client.config.ModConfig
+import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger

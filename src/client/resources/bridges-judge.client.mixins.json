@@ -1,9 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.pixelknights.bridgesgame.mixin.client",
+  "package": "com.pixelknights.bridgesgame.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "JudgeMixin"
   ],
   "injectors": {
     "defaultRequire": 1
