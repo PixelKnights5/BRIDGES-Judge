@@ -12,7 +12,7 @@ import java.nio.file.StandardOpenOption
 import kotlin.io.path.pathString
 
 @Suppress("MemberVisibilityCanBePrivate")
-class ModConfig private constructor() {
+class ModConfig {
 
     val configVersion: Int = 1
     val boardConfig: BoardConfig = BoardConfig()
@@ -68,10 +68,8 @@ class ModConfig private constructor() {
         private const val CONFIG_FILE_NAME = "mod_config.json"
         private val SAVE_DIR = Paths.get(FabricLoader.getInstance().configDir.pathString, MOD_ID)
 
-        val INSTANCE = loadConfig()
-
         @JvmStatic
-        private fun loadConfig(): ModConfig {
+        fun loadConfig(): ModConfig {
             MOD_LOGGER.info("Loading mod configuration")
             val saveFile = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)
             if (!Files.exists(saveFile)) {

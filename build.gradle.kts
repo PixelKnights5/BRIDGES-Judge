@@ -40,10 +40,12 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+    mavenLocal()
+    mavenCentral()
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
+    // Minecraft / Fabric deps
     minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
 //    mappings(loom.officialMojangMappings())
     mappings("net.fabricmc:yarn:${project.property("yarn_mappings")}:v2")
@@ -51,8 +53,14 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:${project.property("kotlin_loader_version")}")
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
-
     testImplementation("net.fabricmc:fabric-loader-junit:${project.property("loader_version")}")
+
+    // Non-minecraft deps
+//    implementation(project.dependencies.platform("io.insert-koin:koin-bom))
+    implementation("io.insert-koin:koin-core:${project.property("koin_version")}")
+    testImplementation("io.insert-koin:koin-test:${project.property("koin_version")}")
+    testImplementation("org.mockito:mockito-core:${project.property("mockito_version")}")
+
 }
 
 tasks.processResources {

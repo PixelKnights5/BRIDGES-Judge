@@ -6,11 +6,13 @@ import com.pixelknights.bridgesgame.client.game.entity.GameColor
 import kotlinx.io.IOException
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Identifier
+import org.koin.core.component.KoinComponent
 
-class TowerLayoutConfig {
+class TowerLayoutConfig : KoinComponent {
 
     private val heightMap: MutableList<MutableList<Int?>> = mutableListOf()
     private val colorMap: MutableList<MutableList<GameColor?>> = mutableListOf()
+    private val baseMap: MutableMap<Array<Int>, GameColor> = mutableMapOf()
 
     init {
         MOD_LOGGER.info("Initializing TowerLayoutConfig")
@@ -28,6 +30,10 @@ class TowerLayoutConfig {
         return colorMap[row][col]
     }
 
+    fun isTeamBase(row: Int, col: Int): GameColor? {
+        return baseMap.get(arrayOf(row, col))
+    }
+
     private fun loadColorMap() {
         val id = Identifier.of(MOD_ID, COLORMAP_PATH)
         val resource = MinecraftClient.getInstance().resourceManager.getResource(id)
@@ -36,10 +42,17 @@ class TowerLayoutConfig {
             throw IOException("Color map could not be loaded")
         }
 
-        for (line in resource.get().reader.lines().iterator()) {
+        for ((row, line) in resource.get().reader.lines().iterator().withIndex()) {
             val tmp = line.split(' ')
-                .map(GameColor::fromChar)
+                .mapIndexed { col, code ->
+                    val color = GameColor.fromChar(code)
+                    if (color != null && color.colorCode.uppercase() == code) {
+                        baseMap[arrayOf(row, col)] = color
+                    }
+                    return@mapIndexed color
+                }
                 .toMutableList()
+
             colorMap.add(tmp)
         }
     }

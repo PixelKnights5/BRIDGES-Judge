@@ -1,8 +1,7 @@
 package com.pixelknights.bridgesgame.client
 
 import com.pixelknights.bridgesgame.client.command.registerJudgeGameCommand
-import com.pixelknights.bridgesgame.client.config.ModConfig
-import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
+import com.pixelknights.bridgesgame.client.di.initDi
 import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -12,9 +11,8 @@ class BridgesJudgeClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         MOD_LOGGER.info("Initializing BridgesJudge Mod")
-        registerJudgeGameCommand()
-        val config = ModConfig.INSTANCE
-        MOD_LOGGER.info("Config = $config")
+        val koin = initDi()
+        registerJudgeGameCommand(koin)
     }
 
 }
