@@ -25,7 +25,7 @@ class JudgeGameCommand (
         val playerPosition = mc.player?.pos
 
         playerPosition?.let {
-            val position = BlockPos.ofFloored(playerPosition.x, playerPosition.y - 1, playerPosition.z)
+            val position = BlockPos.ofFloored(playerPosition.x, playerPosition.y, playerPosition.z)
             mc.world?.getBlockState(position)?.let {
                 ctx.source.sendFeedback(Text.literal("Standing on: $it"))
             }.also {

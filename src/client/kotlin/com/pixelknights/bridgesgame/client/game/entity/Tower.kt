@@ -12,6 +12,7 @@ class Tower(
 ) {
 
     var capturingTeam: Team? = null
+    var isCaptureValidated: Boolean? = null
     var floors: List<Floor> = mutableListOf()
 
 

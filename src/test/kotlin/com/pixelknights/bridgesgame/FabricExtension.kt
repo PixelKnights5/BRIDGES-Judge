@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class FabricExtension : BeforeAllCallback {
 
     override fun beforeAll(ctx: ExtensionContext?) {
-        SharedConstants.getGameVersion()
+        SharedConstants.createGameVersion()
         Bootstrap.initialize()
     }
 

@@ -73,7 +73,7 @@ data class BoardConfig(
 )
 
 data class TowerConfig (
-    val blocksBetweenFloors: Int = 5,
+    val blocksBetweenFloors: Int = 4,
     val orangeTowerCornerBlock: String = "minecraft:waxed_chiseled_copper",
     val markerBlock: String = "minecraft:beacon"
 )
