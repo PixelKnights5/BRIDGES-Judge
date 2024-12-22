@@ -1,19 +1,29 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
-enum class NodeSide(xDirection: Int, zDirection: Int) {
-    NORTH(0, -1),
-    EAST(1, 0),
-    SOUTH(0, 1),
-    WEST(-1, 0),
-    NORTHEAST(1, -1),
-    SOUTHEAST(1, 1),
-    SOUTHWEST(-1, 1),
-    NORTHWEST(-1, -1),
+import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3i
+
+enum class NodeSide(val vector: Vec3i) {
+    NORTH(Vec3i(0, 0, -1)),
+    EAST(Vec3i(1, 0, 0)),
+    SOUTH(Vec3i(0, 0, 1)),
+    WEST(Vec3i(-1, 0, 0)),
+    NORTHEAST(Vec3i(1, 0, -1)),
+    SOUTHEAST(Vec3i(1, 0, 1)),
+    SOUTHWEST(Vec3i(-1, 0, 1)),
+    NORTHWEST(Vec3i(-1, 0, -1));
 }
 
-class Node(
-    val isOpen: Boolean,
-    val connectedBridges: Set<Bridge>,
+data class Node(
     val side: NodeSide,
+    val isOpen: Boolean,
+    val floor: Floor,
+    val worldCoords: BlockPos,
 ) {
+    lateinit var connectedBridges: Set<Bridge>
+
+    companion object {
+        const val DISTANCE_FROM_CENTER = 2
+    }
+
 }

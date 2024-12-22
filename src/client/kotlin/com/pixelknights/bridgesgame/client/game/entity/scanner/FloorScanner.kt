@@ -1,16 +1,13 @@
 package com.pixelknights.bridgesgame.client.game.entity.scanner
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import com.pixelknights.bridgesgame.client.game.entity.Floor
-import com.pixelknights.bridgesgame.client.game.entity.GameColor
+import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
-import com.pixelknights.bridgesgame.client.game.entity.Tower
 import com.pixelknights.bridgesgame.client.util.plus
-
+import com.pixelknights.bridgesgame.client.util.times
 import net.minecraft.block.Blocks
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Vec3i
 import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
 
@@ -23,31 +20,38 @@ class FloorScanner(
     /**
      * This method scans the world to determine information about the specified floor.
      */
-    fun getFloor(tower: Tower, centerCoordinate: BlockPos, floor: Int): Floor {
+    fun getFloor(tower: Tower, centerCoordinate: BlockPos, floorNum: Int): Floor {
         val blocksBetweenFloors = config.towerConfig.blocksBetweenFloors
-        val worldFloorPosition = tower.worldCoordinates(centerCoordinate, config) + Vec3i(
-            0,
-            floor * blocksBetweenFloors,
-            0
-        )
+        val worldFloorPosition = tower.worldCoordinates(centerCoordinate, config)
+            .up(floorNum * blocksBetweenFloors)
 
-        val worldCenterPosition = worldFloorPosition + Vec3i(
-            0,
-            (blocksBetweenFloors / 2),
-            0
-        )
+        val worldCenterPosition = worldFloorPosition.up(blocksBetweenFloors / 2)
 
         val hasLadder = (mc.world?.getBlockState(worldCenterPosition)?.block == Blocks.LADDER)
 
         val claimingTeam = getCapturingTeam(worldFloorPosition)
         val paintingTeam = getCapturingTeam(worldFloorPosition.up())
 
-        return Floor(
-            floorNumber = floor,
+        val floor = Floor(
+            floorNumber = floorNum,
             hasLadder = hasLadder,
             worldCenter = worldCenterPosition,
             captureColor = claimingTeam,
             paintColor = paintingTeam
+        )
+        floor.nodes = NodeSide.entries.map { side -> getNode(floor, side) }.toList()
+        return floor
+    }
+
+    private fun getNode(floor: Floor, side: NodeSide): Node {
+        val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
+        val isOpen = mc.world?.getBlockState(worldCoords)?.isAir
+
+        return Node(
+            side = side,
+            isOpen = isOpen ?: false,
+            floor = floor,
+            worldCoords = worldCoords,
         )
     }
 
