@@ -2,6 +2,7 @@ package com.pixelknights.bridgesgame.client.command
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.context.CommandContext
+import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
@@ -15,27 +16,30 @@ import org.koin.core.component.KoinComponent
 
 class JudgeGameCommand (
     private val logger: Logger,
-    private val client: MinecraftClient
+    private val mc: MinecraftClient,
+    private val towerScanner: TowerScanner
 ) : Command<FabricClientCommandSource>, KoinComponent {
 
 
     override fun run(ctx: CommandContext<FabricClientCommandSource>): Int {
-        ctx.source.sendFeedback(Text.literal("Standing on: ${getBlockBelowPlayer()}"))
-        return 0
-    }
+        val playerPosition = mc.player?.pos
 
-    private fun getBlockBelowPlayer(): BlockState? {
-        val playerPosition = client.player?.pos
-        if (playerPosition != null) {
-            val block = client.world?.getBlockState(BlockPos.ofFloored(playerPosition.x, playerPosition.y - 1, playerPosition.z))
-            return block
-        } else {
-            logger.info("Could not get block below player - Player was null")
+        playerPosition?.let {
+            val position = BlockPos.ofFloored(playerPosition.x, playerPosition.y - 1, playerPosition.z)
+            mc.world?.getBlockState(position)?.let {
+                ctx.source.sendFeedback(Text.literal("Standing on: $it"))
+            }.also {
+                if (it == null) {
+                    ctx.source.sendFeedback(Text.literal("Couldn't find block below player"))
+                }
+            }
+
+            towerScanner.getTowers(position)
         }
 
-        return null
-    }
 
+        return 0
+    }
 }
 
 fun registerJudgeGameCommand(koinApp : KoinApplication) {

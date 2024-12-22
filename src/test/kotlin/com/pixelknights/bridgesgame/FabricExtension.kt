@@ -1,7 +1,7 @@
 package com.pixelknights.bridgesgame
 
+import net.minecraft.Bootstrap
 import net.minecraft.SharedConstants
-import net.minecraft.server.Bootstrap
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class FabricExtension : BeforeAllCallback {
 
     override fun beforeAll(ctx: ExtensionContext?) {
-        SharedConstants.tryDetectVersion()
-        Bootstrap.bootStrap()
+        SharedConstants.getGameVersion()
+        Bootstrap.initialize()
     }
 
 }

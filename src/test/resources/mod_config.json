@@ -1,0 +1,15 @@
+{
+  "configVersion": 1,
+  "boardConfig": {
+    "width": 19,
+    "height": 19,
+    "blocksBetweenTowers": 5,
+    "towerDiameter": 5,
+    "maxGameHeight": 30
+  },
+  "towerConfig": {
+    "blocksBetweenFloors": 5,
+    "orangeTowerCornerBlock": "minecraft:waxed_chiseled_copper",
+    "markerBlock": "minecraft:beacon"
+  }
+}

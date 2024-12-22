@@ -6,9 +6,12 @@ import com.pixelknights.bridgesgame.client.game.entity.GameColor
 import kotlinx.io.IOException
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Identifier
+import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
 
-class TowerLayoutConfig : KoinComponent {
+class TowerLayoutConfig(
+    val logger: Logger
+) : KoinComponent {
 
     private val heightMap: MutableList<MutableList<Int?>> = mutableListOf()
     private val colorMap: MutableList<MutableList<GameColor?>> = mutableListOf()
@@ -30,8 +33,14 @@ class TowerLayoutConfig : KoinComponent {
         return colorMap[row][col]
     }
 
-    fun isTeamBase(row: Int, col: Int): GameColor? {
-        return baseMap.get(arrayOf(row, col))
+    fun isTeamBase(row: Int, col: Int): Boolean {
+        // Sadly, looking up the the value by map key does not work with array keys, so we must explicitly search based on content.
+        return baseMap
+            .filter {
+                it.key contentEquals arrayOf(row, col)
+            }
+            .any()
+
     }
 
     private fun loadColorMap() {

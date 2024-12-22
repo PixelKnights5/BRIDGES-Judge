@@ -59,7 +59,7 @@ dependencies {
 //    implementation(project.dependencies.platform("io.insert-koin:koin-bom))
     implementation("io.insert-koin:koin-core:${project.property("koin_version")}")
     testImplementation("io.insert-koin:koin-test:${project.property("koin_version")}")
-    testImplementation("org.mockito:mockito-core:${project.property("mockito_version")}")
+    testImplementation("io.mockk:mockk:${project.property("mockk_version")}")
 
 }
 

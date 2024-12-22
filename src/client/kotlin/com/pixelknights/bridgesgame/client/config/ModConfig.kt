@@ -4,43 +4,24 @@ import com.google.gson.GsonBuilder
 import com.pixelknights.bridgesgame.client.MOD_ID
 import com.pixelknights.bridgesgame.client.MOD_LOGGER
 import kotlinx.io.IOException
+import kotlinx.serialization.Transient
 import net.fabricmc.loader.api.FabricLoader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.pathString
 
-@Suppress("MemberVisibilityCanBePrivate")
-class ModConfig {
+data class ModConfig(
+    val boardConfig: BoardConfig = BoardConfig(),
+    val towerConfig: TowerConfig = TowerConfig(),
+    val configVersion: Int = 1,
+) {
 
-    val configVersion: Int = 1
-    val boardConfig: BoardConfig = BoardConfig()
-    val towerConfig: TowerConfig = TowerConfig()
-
-
-    inner class BoardConfig(
-        val width: Int = 19,
-        val height: Int = 19,
-        val blocksBetweenTowers: Int = 5,
-        val towerDiameter: Int = 5,
-        val maxGameHeight: Int = 30,
-    ) {
-        override fun toString(): String {
-            return "BoardConfig(width=$width, height=$height, blocksBetweenTowers=$blocksBetweenTowers, towerDiameter=$towerDiameter, maxGameHeight=$maxGameHeight)"
-        }
-    }
-
-    inner class TowerConfig (
-        val blocksBetweenFloors: Int = 5,
-        val orangeTowerCornerBlock: String = "minecraft:waxed_chiseled_copper",
-        val markerBlock: String = "minecraft:beacon"
-    ) {
-        override fun toString(): String {
-            return "TowerConfig(blocksBetweenFloors=$blocksBetweenFloors, orangeTowerCornerBlock='$orangeTowerCornerBlock', markerBlock='$markerBlock')"
-        }
-    }
-
+    @Transient
+    val spaceBetweenCenters: Int
+        get() = boardConfig.blocksBetweenTowers + boardConfig.towerDiameter
 
 
     fun save() {
@@ -58,10 +39,6 @@ class ModConfig {
         }
     }
 
-    override fun toString(): String {
-        return "ModConfig(configVersion='$configVersion', boardConfig=$boardConfig, towerConfig=$towerConfig)"
-    }
-
 
     companion object {
 
@@ -69,9 +46,9 @@ class ModConfig {
         private val SAVE_DIR = Paths.get(FabricLoader.getInstance().configDir.pathString, MOD_ID)
 
         @JvmStatic
-        fun loadConfig(): ModConfig {
+        fun loadConfig(saveFile: Path = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)): ModConfig {
             MOD_LOGGER.info("Loading mod configuration")
-            val saveFile = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)
+//            val saveFile = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)
             if (!Files.exists(saveFile)) {
                 MOD_LOGGER.info("No existing save file found, creating new one.")
                 val config = ModConfig()
@@ -86,3 +63,17 @@ class ModConfig {
         }
     }
 }
+
+data class BoardConfig(
+    val width: Int = 19,
+    val height: Int = 19,
+    val blocksBetweenTowers: Int = 5,
+    val towerDiameter: Int = 5,
+    val maxGameHeight: Int = 30,
+)
+
+data class TowerConfig (
+    val blocksBetweenFloors: Int = 5,
+    val orangeTowerCornerBlock: String = "minecraft:waxed_chiseled_copper",
+    val markerBlock: String = "minecraft:beacon"
+)
