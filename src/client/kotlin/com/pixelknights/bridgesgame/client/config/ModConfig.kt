@@ -70,6 +70,7 @@ data class BoardConfig(
     val blocksBetweenTowers: Int = 5,
     val towerDiameter: Int = 5,
     val maxGameHeight: Int = 30,
+    val maxMisplacedBlockTolerance: Int = 2,
 )
 
 data class TowerConfig (

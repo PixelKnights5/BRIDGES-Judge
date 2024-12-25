@@ -1,7 +1,13 @@
 package com.pixelknights.bridgesgame.client.game.rules
 
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
+import com.pixelknights.bridgesgame.client.game.entity.GameColor
+import com.pixelknights.bridgesgame.client.util.getBlockState
+import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
 import com.pixelknights.bridgesgame.client.util.plus
+import net.minecraft.client.MinecraftClient
+import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3i
 import kotlin.math.cos
 import kotlin.math.sin
@@ -56,14 +62,40 @@ class BridgeTemplate(
     }
 
     /**
-     * Shift the bridge over by the provided number of blocks in each coordinatef
+     * Shift the bridge over by the provided number of blocks in each coordinate
      */
     fun translate(x: Int, y: Int, z: Int) = translate(Vec3i(x, y, z))
+
+    /**
+     * Check who owns this bridge (if anyone). Returns `null` if this bridge does not exist.
+     * This can also be used to detect paints by shifting [nodeCoords] +1 in the Y axis
+     */
+    fun findBridgeOwner(mc: MinecraftClient, config: ModConfig, nodeCoords: BlockPos): GameColor? {
+        val nodeTemplate = this.translate(nodeCoords)
+        val blockColors = nodeTemplate.blockCoords.map {
+            mc.world?.getBlockState(it)
+        }.map {
+            getTeamColorForBlock(it?.block)
+        }.groupBy { it }
+
+        // If there are too many missing blocks, it's not a bridge.
+        val numMissingBlocks = blockColors[null]?.size ?: 0
+        if (numMissingBlocks > config.boardConfig.maxMisplacedBlockTolerance) {
+            return null
+        }
+
+        // Technically there could be multiple colors if someone made a mistake, but it should not
+        // happen in normal gameplay. If it does, the team that has the most blocks will be considered the
+        // owner. TODO: Consider sending a warning event if this happens.
+        return blockColors.maxBy { it.value.size }.key
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is BridgeTemplate) return false
 
+        // This intentionally does not check targetNodeOffset so that bridges in the opposite direction are
+        // because bridges are not directed.
         return !(blockCoords.size == other.blockCoords.size &&
                 blockCoords.containsAll(other.blockCoords))
     }
@@ -72,9 +104,12 @@ class BridgeTemplate(
         return blockCoords.hashCode()
     }
 
+    override fun toString(): String {
+        return "BridgeTemplate(blockCoords=$blockCoords, targetNodeOffset=$targetNodeOffset)"
+    }
+
 
     companion object {
-
         val ALL_BRIDGE_COMBINATIONS = setOf(getCornerTemplates(), getCardinalTemplates())
 
         /**
