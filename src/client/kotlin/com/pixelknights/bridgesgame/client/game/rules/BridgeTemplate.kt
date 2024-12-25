@@ -7,11 +7,15 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class BridgeTemplate(
-    val blockCoords: List<Vec3i>
+    val blockCoords: List<Vec3i>,
+    /**
+     * This value shows the offset from the current node to the node that the bridge goes to
+     */
+    val targetNodeOffset: Vec3i
 ) {
 
     /**
-     * Copy the existing template, but rotate it by a given number of degrees
+     * Copy the existing template, but rotate it by a given number of degrees about the y axis
      */
     fun rotateTemplate(degrees: Int): BridgeTemplate {
         val radians = Math.toRadians(degrees.toDouble())
@@ -20,7 +24,7 @@ class BridgeTemplate(
 
 
         // 2D rotation matrix:
-        // [x', y'] = | cos(theta)  -sin(theta) | * | x |
+        // [x', z'] = | cos(theta)  -sin(theta) | * | x |
         //            | sin(theta)   cos(theta) |   | z |
         val newCoords = blockCoords.map { coordinate ->
             val newX = ((coordinate.x * cos) - (coordinate.z * sin)).toInt()
@@ -28,24 +32,27 @@ class BridgeTemplate(
             Vec3i(newX, coordinate.y, newZ)
         }.toList()
 
-        return BridgeTemplate(newCoords)
+        val newNodeX =  ((targetNodeOffset.x * cos) - (targetNodeOffset.z * sin)).toInt()
+        val newNodeZ =  ((targetNodeOffset.x * sin) + (targetNodeOffset.z * cos)).toInt()
+
+        return BridgeTemplate(newCoords, Vec3i(newNodeX, targetNodeOffset.y, newNodeZ))
     }
 
     private fun flipX(): BridgeTemplate =
         BridgeTemplate(this.blockCoords.map {
             Vec3i(-it.x, it.y, it.z)
-        })
+        }, Vec3i(-targetNodeOffset.x, targetNodeOffset.y, targetNodeOffset.z))
 
     private fun flipZ(): BridgeTemplate =
         BridgeTemplate(this.blockCoords.map {
             Vec3i(it.x, it.y, -it.z)
-        })
+        }, Vec3i(targetNodeOffset.x, targetNodeOffset.y, -targetNodeOffset.z))
 
     /**
      * Shift the bridge over by [distance] blocks
      */
     fun translate(distance: Vec3i): BridgeTemplate {
-        return BridgeTemplate(blockCoords.map { it + distance })
+        return BridgeTemplate(blockCoords.map { it + distance }, targetNodeOffset + distance)
     }
 
     /**
@@ -68,12 +75,14 @@ class BridgeTemplate(
 
     companion object {
 
+        val ALL_BRIDGE_COMBINATIONS = setOf(getCornerTemplates(), getCardinalTemplates())
+
         /**
          * Get a list of all possible bridges that could come from a floor
          * from a corner node.
          * Coordinates are relative to the center of the floor
          */
-        fun getCornerTemplates(): Set<BridgeTemplate> {
+        private fun getCornerTemplates(): Set<BridgeTemplate> {
             // These coordinates are relative to the NODE, not the
             // center of the tower. It will be fixed later, but makes the
             // maths a bit simpler
@@ -81,18 +90,18 @@ class BridgeTemplate(
 
             val straightBridge = BridgeTemplate((1 .. 5).map {
                 Vec3i(it, 0, 0)
-            })
+            }, Vec3i(6, 0, 0))
             coreBridges.add(straightBridge)
             coreBridges.add(straightBridge.rotateTemplate(90))
 
             val diagonalBridge = BridgeTemplate((0 until 5).map {
                 Vec3i(it+1, 0, it+1)
-            })
+            }, Vec3i(6, 0, 6))
             coreBridges.add(diagonalBridge)
 
             val reverseDiagonalBridge = BridgeTemplate((0 until 5).map {
                 Vec3i(it+1, 0, -it)
-            })
+            }, Vec3i(6, 0, -4))
             coreBridges.add(reverseDiagonalBridge)
             coreBridges.add(reverseDiagonalBridge.flipZ().flipX().translate(1, 0, 1))
 
@@ -102,32 +111,32 @@ class BridgeTemplate(
             // tower's corner.
             var twoStepDiagonal = BridgeTemplate((0 until 10).map {
                 Vec3i((it/2)+1, 0, it+1)
-            })
+            }, Vec3i(6, 0, 10))
             coreBridges.add(twoStepDiagonal)
             twoStepDiagonal = BridgeTemplate((0 until 10).map {
                 Vec3i(it+1, 0, (it/2)+1)
-            })
+            }, Vec3i(10, 0, 6))
             coreBridges.add(twoStepDiagonal)
 
             // There are 4 3-step bridge options.
             var threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i((it/3)+1, 0, it+1)
-            })
+            }, Vec3i(6, 0, 16))
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i(it+1, 0, (it/3)+1)
-            })
+            }, Vec3i(16, 0, 6))
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i((-it/3)+1, 0, it)
-            })
+            }, Vec3i(-6, 0, 16) )
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i(it, 0, (-it/3)+1)
-            })
+            }, Vec3i(16, 0, -6))
             coreBridges.add(threeStepDiagonal)
 
             val floorSpaceBridges = coreBridges.map { bridgeTemplate ->
@@ -148,26 +157,26 @@ class BridgeTemplate(
          * floor in a cardinal direction (i.e. Not a corner node).
          * Coordinates are relative to the center of the floor
          */
-        fun getCardinalTemplates(): Set<BridgeTemplate> {
+        private fun getCardinalTemplates(): Set<BridgeTemplate> {
             // These coordinates are relative to the NODE, not the
             // center of the tower. It will be fixed later, but makes the
             // maths a bit simpler
             val coreBridges = mutableSetOf<BridgeTemplate>()
             val straightBridge = BridgeTemplate((1 .. 5).map {
                 Vec3i(it, 0, 0)
-            })
+            }, Vec3i(6, 0, 0))
             coreBridges.add(straightBridge)
 
             val diagonalBridge = BridgeTemplate((0 until 8).map {
                 Vec3i(it+1, 0, it)
-            })
+            }, Vec3i(6, 0, 10))
             // Get the diagonal in forward and reverse directions
             coreBridges.add(diagonalBridge)
             coreBridges.add(diagonalBridge.flipZ())
 
             val diagonalSameFaceBridge = BridgeTemplate((0 until 10).map {
                 Vec3i((it/2)+1, 0, it)
-            })
+            }, Vec3i(6, 0, 10))
             coreBridges.add(diagonalSameFaceBridge)
             coreBridges.add(diagonalBridge.flipZ())
 
@@ -186,18 +195,6 @@ class BridgeTemplate(
             }.flatten().toSet()
         }
 
-        @JvmStatic
-        fun generateTemplate(length: Int, step: Int): BridgeTemplate {
-            val coords = (1 .. length).map { x ->
-                return@map if (step == 0) {
-                    Vec3i(x, 0, 0)
-                } else {
-                    Vec3i(x, 0, x / step)
-                }
-            }.toList()
-
-            return BridgeTemplate(coords)
-        }
     }
 
 }
