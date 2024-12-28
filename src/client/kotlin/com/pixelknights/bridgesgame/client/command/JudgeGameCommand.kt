@@ -2,11 +2,11 @@ package com.pixelknights.bridgesgame.client.command
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.context.CommandContext
+import com.pixelknights.bridgesgame.client.game.entity.GameBoard
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
-import net.minecraft.block.BlockState
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
@@ -17,7 +17,8 @@ import org.koin.core.component.KoinComponent
 class JudgeGameCommand (
     private val logger: Logger,
     private val mc: MinecraftClient,
-    private val towerScanner: TowerScanner
+    private val towerScanner: TowerScanner,
+    private val gameBoard: GameBoard
 ) : Command<FabricClientCommandSource>, KoinComponent {
 
 
@@ -34,7 +35,7 @@ class JudgeGameCommand (
                 }
             }
 
-            towerScanner.getTowers(position)
+            gameBoard.scanGame(BlockPos.ofFloored(playerPosition))
         }
 
 

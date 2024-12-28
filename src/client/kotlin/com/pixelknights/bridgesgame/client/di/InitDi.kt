@@ -7,6 +7,8 @@ import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.FloorScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
+import com.pixelknights.bridgesgame.client.game.entity.GameBoard
+
 import net.minecraft.client.MinecraftClient
 import org.apache.logging.log4j.LogManager
 import org.koin.core.KoinApplication
@@ -29,6 +31,7 @@ val appModule = module {
     singleOf(::TowerScanner)
     singleOf(::FloorScanner)
     singleOf(::BridgeScanner)
+    singleOf(::GameBoard)
 }
 
 fun initDi(): KoinApplication {

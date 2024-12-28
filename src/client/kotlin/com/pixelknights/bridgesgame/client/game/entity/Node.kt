@@ -26,4 +26,9 @@ data class Node(
         const val DISTANCE_FROM_CENTER = 2
     }
 
+    override fun toString(): String {
+        return "Node(side=$side, isOpen=$isOpen, floor=$floor, worldCoords=$worldCoords)"
+    }
+
+
 }
