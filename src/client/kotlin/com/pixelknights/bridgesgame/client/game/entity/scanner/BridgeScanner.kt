@@ -1,6 +1,5 @@
 package com.pixelknights.bridgesgame.client.game.entity.scanner
 
-import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.Bridge
 import com.pixelknights.bridgesgame.client.game.entity.BridgeError
 import com.pixelknights.bridgesgame.client.game.entity.Node
@@ -9,11 +8,8 @@ import com.pixelknights.bridgesgame.client.game.rules.BridgeTemplate
 import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
-import org.apache.logging.log4j.Logger
 
 class BridgeScanner (
-    private val logger: Logger,
-    private val config: ModConfig,
     private val mc: MinecraftClient,
 ) {
 
@@ -28,7 +24,7 @@ class BridgeScanner (
             }
 
             val errors = mutableListOf<BridgeError>()
-            val owner = template.findBridgeOwner(mc, config, node.worldCoords.down(2))
+            val owner = template.findBridgeOwner(mc, node.worldCoords.down(2))
 
             // If there is no bridge, don't continue.
             @Suppress("FoldInitializerAndIfToElvis")
@@ -36,7 +32,7 @@ class BridgeScanner (
                 return@map null
             }
 
-            val painter = template.findBridgeOwner(mc, config, node.worldCoords.down(1))
+            val painter = template.findBridgeOwner(mc, node.worldCoords.down(1))
             val endNode = allNodes.filter { it.worldCoords == (node.worldCoords + template.targetNodeOffset) }
 
             if (endNode.isEmpty()) {

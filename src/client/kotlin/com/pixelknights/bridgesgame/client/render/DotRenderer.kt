@@ -3,13 +3,12 @@ package com.pixelknights.bridgesgame.client.render
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.minecraft.client.render.*
 import net.minecraft.client.util.math.MatrixStack
-import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4f
 
 class DotRenderer (
 ) {
-    val dotsToRender: MutableSet<BlockPos> = mutableSetOf()
+    val dotsToRender: MutableSet<DebugDot> = mutableSetOf()
 
     // Store positions where dots should be rendered
 
@@ -31,26 +30,26 @@ class DotRenderer (
         // Get camera position for proper rendering position
         val cameraPos = camera.pos
 
-        for (pos in dotsToRender) {
+        for (dot in dotsToRender) {
             // Translate to the block position
             matrices.translate(
-                pos.x - cameraPos.x + 0.5,
-                pos.y - cameraPos.y + 0.5,
-                pos.z - cameraPos.z + 0.5
+                dot.position.x - cameraPos.x + 0.5,
+                dot.position.y - cameraPos.y + 0.5 + dot.noise,
+                dot.position.z - cameraPos.z + 0.5
             )
 
             // Draw the dot
             drawDot(
                 matrices,
                 vertexConsumers,
-                Color(0f, 0f, 0f, 1f)
+                dot.color
             )
 
             // Reset translation for next dot
             matrices.translate(
-                -(pos.x - cameraPos.x + 0.5),
-                -(pos.y - cameraPos.y + 0.5),
-                -(pos.z - cameraPos.z + 0.5)
+                -(dot.position.x - cameraPos.x + 0.5),
+                -(dot.position.y - cameraPos.y + 0.5 + dot.noise),
+                -(dot.position.z - cameraPos.z + 0.5)
             )
         }
 

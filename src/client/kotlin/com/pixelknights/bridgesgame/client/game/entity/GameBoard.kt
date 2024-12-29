@@ -2,10 +2,7 @@ package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
-import com.pixelknights.bridgesgame.client.render.Color
-import com.pixelknights.bridgesgame.client.render.DebugLine
-import com.pixelknights.bridgesgame.client.render.DotRenderer
-import com.pixelknights.bridgesgame.client.render.LineRenderer
+import com.pixelknights.bridgesgame.client.render.*
 import net.minecraft.util.math.BlockPos
 import org.koin.core.component.KoinComponent
 
@@ -52,17 +49,19 @@ class GameBoard constructor(
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
-        DebugLine.LINES.clear()
+        lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
         bridges.forEach { bridge ->
             if (bridge.errors.isEmpty()) {
                 val start = bridge.startNode.worldCoords
                 val end = bridge.endNode?.worldCoords
 
-                dotRenderer.dotsToRender += start
                 if (end != null) {
-                    dotRenderer.dotsToRender += end
-                    lineRenderer.linesToRender += DebugLine(start, end, Color(0f, 0f, 0f, 1f))
+                    val line = DebugLine(start, end, Color.BLACK)
+                    lineRenderer.linesToRender += line
+                    dotRenderer.dotsToRender += line.dots
+                } else {
+                    dotRenderer.dotsToRender += DebugDot(start, Color.WHITE, 0f)
                 }
             }
         }
