@@ -3,7 +3,6 @@ package com.pixelknights.bridgesgame.client.command
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.context.CommandContext
 import com.pixelknights.bridgesgame.client.game.entity.GameBoard
-import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
@@ -13,7 +12,6 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
-import org.apache.logging.log4j.Logger
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 

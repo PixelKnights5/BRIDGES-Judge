@@ -4,7 +4,9 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.sign
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 
@@ -27,6 +29,19 @@ operator fun Vec3d.times(other: Vec3d): Vec3d = this.multiply(other)
 
 fun Vec3i.distanceTo(other: Vec3i): Double {
     return sqrt(this.getSquaredDistance(other))
+}
+
+
+fun Vec3i.rotateBy(degrees: Int): Vec3i {
+    // 2D rotation matrix:
+    // [x', z'] = | cos(theta)  -sin(theta) | * | x |
+    //            | sin(theta)   cos(theta) |   | z |
+    val rad = Math.toRadians(degrees.toDouble())
+    val sinAngle = sin(rad).toInt()
+    val cosAngle = cos(rad).toInt()
+    val x = ((this.x * cosAngle) - (this.z * sinAngle))
+    val z = ((this.x * sinAngle) + (this.z * cosAngle))
+    return Vec3i(x, this.y, z)
 }
 
 
