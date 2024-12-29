@@ -22,7 +22,7 @@ class BridgesJudgeClient : ClientModInitializer {
 }
 
 fun renderDebugObjects(dotRenderer: DotRenderer, lineRenderer: LineRenderer) {
-    WorldRenderEvents.AFTER_TRANSLUCENT.register { context ->
+    WorldRenderEvents.AFTER_ENTITIES.register { context ->
         dotRenderer.renderDots(context)
         lineRenderer.renderLines(context)
     }
