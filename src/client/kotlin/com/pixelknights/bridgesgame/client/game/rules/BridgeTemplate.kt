@@ -1,93 +1,73 @@
 package com.pixelknights.bridgesgame.client.game.rules
 
 
-import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.GameColor
-import com.pixelknights.bridgesgame.client.util.getBlockState
-import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
-import com.pixelknights.bridgesgame.client.util.plus
+import com.pixelknights.bridgesgame.client.util.*
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3i
-import kotlin.math.cos
-import kotlin.math.sin
 
 class BridgeTemplate(
     val blockCoords: List<Vec3i>,
     /**
      * This value shows the offset from the current node to the node that the bridge goes to
      */
-    val targetNodeOffset: Vec3i
+    val targetNodeOffset: Vec3i,
+    val isCornerTemplate: Boolean,
 ) {
 
     /**
-     * Copy the existing template, but rotate it by a given number of degrees about the y axis
+     * Copy the existing template, but rotate it by a given number of degrees about the y axis.
+     * The input angle must be divisible by 90 degrees, otherwise the calculation will be incorrect.
      */
     fun rotateTemplate(degrees: Int): BridgeTemplate {
-        val radians = Math.toRadians(degrees.toDouble())
-        val cos = cos(radians)
-        val sin = sin(radians)
-
-
-        // 2D rotation matrix:
-        // [x', z'] = | cos(theta)  -sin(theta) | * | x |
-        //            | sin(theta)   cos(theta) |   | z |
         val newCoords = blockCoords.map { coordinate ->
-            val newX = ((coordinate.x * cos) - (coordinate.z * sin)).toInt()
-            val newZ = ((coordinate.x * sin) + (coordinate.z * cos)).toInt()
-            Vec3i(newX, coordinate.y, newZ)
+            coordinate.rotateBy(degrees)
         }.toList()
 
-        val newNodeX =  ((targetNodeOffset.x * cos) - (targetNodeOffset.z * sin)).toInt()
-        val newNodeZ =  ((targetNodeOffset.x * sin) + (targetNodeOffset.z * cos)).toInt()
-
-        return BridgeTemplate(newCoords, Vec3i(newNodeX, targetNodeOffset.y, newNodeZ))
+        return BridgeTemplate(newCoords, targetNodeOffset.rotateBy(degrees), isCornerTemplate)
     }
-
-    private fun flipX(): BridgeTemplate =
-        BridgeTemplate(this.blockCoords.map {
-            Vec3i(-it.x, it.y, it.z)
-        }, Vec3i(-targetNodeOffset.x, targetNodeOffset.y, targetNodeOffset.z))
 
     private fun flipZ(): BridgeTemplate =
         BridgeTemplate(this.blockCoords.map {
             Vec3i(it.x, it.y, -it.z)
-        }, Vec3i(targetNodeOffset.x, targetNodeOffset.y, -targetNodeOffset.z))
+        }, Vec3i(targetNodeOffset.x, targetNodeOffset.y, -targetNodeOffset.z), isCornerTemplate)
 
     /**
      * Shift the bridge over by [distance] blocks
      */
     fun translate(distance: Vec3i): BridgeTemplate {
-        return BridgeTemplate(blockCoords.map { it + distance }, targetNodeOffset + distance)
+        return BridgeTemplate(blockCoords.map { it + distance }, targetNodeOffset + distance, isCornerTemplate)
     }
 
-    /**
-     * Shift the bridge over by the provided number of blocks in each coordinate
-     */
-    fun translate(x: Int, y: Int, z: Int) = translate(Vec3i(x, y, z))
 
     /**
      * Check who owns this bridge (if anyone). Returns `null` if this bridge does not exist.
      * This can also be used to detect paints by shifting [nodeCoords] +1 in the Y axis
      */
-    fun findBridgeOwner(mc: MinecraftClient, config: ModConfig, nodeCoords: BlockPos): GameColor? {
+    fun findBridgeOwner(mc: MinecraftClient, nodeCoords: BlockPos): GameColor? {
         val nodeTemplate = this.translate(nodeCoords)
         val blockColors = nodeTemplate.blockCoords.map {
             mc.world?.getBlockState(it)
         }.map {
             getTeamColorForBlock(it?.block)
-        }.groupBy { it }
+        }.groupBy { it }.map { it.key to it.value.size }
 
-        // If there are too many missing blocks, it's not a bridge.
-        val numMissingBlocks = blockColors[null]?.size ?: 0
-        if (numMissingBlocks > config.boardConfig.maxMisplacedBlockTolerance) {
+        val primaryColor = blockColors.maxBy { it.second }
+
+        // If there are missing blocks, it's not a bridge.
+        val numMissingBlocks = nodeTemplate.blockCoords.size - primaryColor.second
+        if (numMissingBlocks > 1) {
             return null
         }
+
 
         // Technically there could be multiple colors if someone made a mistake, but it should not
         // happen in normal gameplay. If it does, the team that has the most blocks will be considered the
         // owner. TODO: Consider sending a warning event if this happens.
-        return blockColors.maxBy { it.value.size }.key
+//        return GameColor.RED
+////        return blockColors.values.flatten().filterNotNull().first()
+        return primaryColor.first
     }
 
     override fun equals(other: Any?): Boolean {
@@ -123,68 +103,75 @@ class BridgeTemplate(
             // maths a bit simpler
             val coreBridges = mutableSetOf<BridgeTemplate>()
 
-            val straightBridge = BridgeTemplate((1 .. 5).map {
+            val straightBridge = BridgeTemplate((1 until 6).map {
                 Vec3i(it, 0, 0)
-            }, Vec3i(6, 0, 0))
+            }, Vec3i(6, 0, 0), true)
             coreBridges.add(straightBridge)
-            coreBridges.add(straightBridge.rotateTemplate(90))
 
-            val diagonalBridge = BridgeTemplate((0 until 5).map {
+            val diagonalBridge = BridgeTemplate((0 until 6).map {
                 Vec3i(it+1, 0, it+1)
-            }, Vec3i(6, 0, 6))
+            }, Vec3i(6, 0, 6), true)
             coreBridges.add(diagonalBridge)
+            coreBridges.add(diagonalBridge.flipZ())
 
-            val reverseDiagonalBridge = BridgeTemplate((0 until 5).map {
+
+            val reverseDiagonalBridge = BridgeTemplate((0 until 6).map {
                 Vec3i(it+1, 0, -it)
-            }, Vec3i(6, 0, -4))
+            }, Vec3i(6, 0, -4), true)
             coreBridges.add(reverseDiagonalBridge)
-            coreBridges.add(reverseDiagonalBridge.flipZ().flipX().translate(1, 0, 1))
+            coreBridges.add(reverseDiagonalBridge.flipZ())
 
 
-            // There are only 2 2-step bridges that we need to consdier.
+            // There are only 2 2-step bridges that we need to consider.
             // The other 2 possibilities will be picked up by another
             // tower's corner.
             var twoStepDiagonal = BridgeTemplate((0 until 10).map {
                 Vec3i((it/2)+1, 0, it+1)
-            }, Vec3i(6, 0, 10))
+            }, Vec3i(6, 0, 10), true)
             coreBridges.add(twoStepDiagonal)
             twoStepDiagonal = BridgeTemplate((0 until 10).map {
                 Vec3i(it+1, 0, (it/2)+1)
-            }, Vec3i(10, 0, 6))
+            }, Vec3i(10, 0, 6), true)
             coreBridges.add(twoStepDiagonal)
 
             // There are 4 3-step bridge options.
             var threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i((it/3)+1, 0, it+1)
-            }, Vec3i(6, 0, 16))
+            }, Vec3i(6, 0, 16), true)
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i(it+1, 0, (it/3)+1)
-            }, Vec3i(16, 0, 6))
+            }, Vec3i(16, 0, 6), true)
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i((-it/3)+1, 0, it)
-            }, Vec3i(-6, 0, 16) )
+            }, Vec3i(-6, 0, 16), true)
             coreBridges.add(threeStepDiagonal)
 
             threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i(it, 0, (-it/3)+1)
-            }, Vec3i(16, 0, -6))
+            }, Vec3i(16, 0, -6), true)
             coreBridges.add(threeStepDiagonal)
 
+            val translationVector = Vec3i(2, 0, 2)
             val floorSpaceBridges = coreBridges.map { bridgeTemplate ->
-                bridgeTemplate.translate(2, 0, 2)
+                bridgeTemplate.translate(translationVector)
             }
 
             // floorSpaceBridges only contains bridges coming out of the East node.
             // Get the same bridges for the other 3 cardinal directions
-            return intArrayOf(0, 90, 180, 270).map { angle ->
+            val allTemplates = intArrayOf(0, 90, 180, 270).map { angle ->
+                val negativeTranslationVector = (translationVector * -1).rotateBy(angle)
                 floorSpaceBridges.map {
-                    it.rotateTemplate(angle)
+                    it
+                        .rotateTemplate(angle)
+                        .translate(negativeTranslationVector)
                 }
-            }.flatten().toSet()
+            }.flatten().toMutableSet()
+
+            return allTemplates
         }
 
         /**
@@ -199,38 +186,47 @@ class BridgeTemplate(
             val coreBridges = mutableSetOf<BridgeTemplate>()
             val straightBridge = BridgeTemplate((1 .. 5).map {
                 Vec3i(it, 0, 0)
-            }, Vec3i(6, 0, 0))
+            }, Vec3i(6, 0, 0), false)
             coreBridges.add(straightBridge)
 
             val diagonalBridge = BridgeTemplate((0 until 8).map {
                 Vec3i(it+1, 0, it)
-            }, Vec3i(6, 0, 10))
+            }, Vec3i(8, 0, 8), false)
             // Get the diagonal in forward and reverse directions
             coreBridges.add(diagonalBridge)
             coreBridges.add(diagonalBridge.flipZ())
 
             val diagonalSameFaceBridge = BridgeTemplate((0 until 10).map {
                 Vec3i((it/2)+1, 0, it)
-            }, Vec3i(6, 0, 10))
+            }, Vec3i(6, 0, 10), false)
             coreBridges.add(diagonalSameFaceBridge)
-            coreBridges.add(diagonalBridge.flipZ())
+            coreBridges.add(diagonalSameFaceBridge.flipZ())
 
             // Get the positions of each possible bridge block relative to the
             // center of the floor
+            val translationVector = Vec3i(2, 0, 0)
             val floorSpaceBridges = coreBridges.map {
-                it.translate(Vec3i(2, 0, 0))
+                it.translate(translationVector)
             }
 
             // floorSpaceBridges only contains bridges coming out of the East node.
             // Get the same bridges for the other 3 cardinal directions
-            return intArrayOf(0, 90, 180, 270).map { angle ->
+//            return floorSpaceBridges..toSet()
+            val allTemplates = intArrayOf(0, 90, 180, 270).map { angle ->
+                val negativeTranslationVector = (translationVector * -1).rotateBy(angle)
                 floorSpaceBridges.map {
-                    it.rotateTemplate(angle)
+                    it
+                        .rotateTemplate(angle)
+                        .translate(negativeTranslationVector)
                 }
-            }.flatten().toSet()
+            }.flatten().toMutableSet()
+
+
+            return allTemplates
         }
 
     }
 
 }
+
 

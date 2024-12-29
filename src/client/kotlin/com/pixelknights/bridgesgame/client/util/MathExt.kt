@@ -1,21 +1,49 @@
 package com.pixelknights.bridgesgame.client.util
 
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
-import kotlin.math.abs
-import kotlin.math.sign
-import kotlin.math.sqrt
+import kotlin.math.*
 
+
+fun ClosedFloatingPointRange<Double>.randomFloat(): Float {
+    return (this.start + Math.random() * (this.endInclusive - this.start)).toFloat()
+}
 
 operator fun BlockPos.plus(other: Vec3i): BlockPos = this.add(other)
 operator fun BlockPos.minus(other: Vec3i): BlockPos = this.subtract(other)
 operator fun BlockPos.times(scale: Int): BlockPos = this.multiply(scale)
+
 operator fun Vec3i.plus(other: Vec3i): Vec3i = this.add(other)
 operator fun Vec3i.times(scale: Int): Vec3i = this.multiply(scale)
 operator fun Vec3i.minus(other: Vec3i): Vec3i = this.subtract(other)
 
+operator fun Vec3d.plus(other: Vec3d): Vec3d = this.add(other)
+operator fun Vec3d.minus(other: Vec3d): Vec3d = this.subtract(other)
+operator fun Vec3d.times(other: Vec3d): Vec3d = this.multiply(other)
+
+
 fun Vec3i.distanceTo(other: Vec3i): Double {
     return sqrt(this.getSquaredDistance(other))
+}
+
+
+/**
+ * Rotate a 2D vector by a given number of degrees.
+ * This ONLY works if the degrees are divisible by 90.
+ */
+fun Vec3i.rotateBy(degrees: Int): Vec3i {
+    // 2D rotation matrix:
+    // [x', z'] = | cos(theta)  -sin(theta) | * | x |
+    //            | sin(theta)   cos(theta) |   | z |
+    val rad = Math.toRadians(degrees.toDouble())
+    // Convert to integers to avoid floating point errors
+    // This will work for numbers divisible by 90 because the result of sin and cos will be -1, 0, or 1
+    val sinAngle = sin(rad).toInt()
+    val cosAngle = cos(rad).toInt()
+    val x = ((this.x * cosAngle) - (this.z * sinAngle))
+    val z = ((this.x * sinAngle) + (this.z * cosAngle))
+    return Vec3i(x, this.y, z)
 }
 
 

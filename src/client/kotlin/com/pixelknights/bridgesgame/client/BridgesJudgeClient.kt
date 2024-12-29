@@ -2,7 +2,10 @@ package com.pixelknights.bridgesgame.client
 
 import com.pixelknights.bridgesgame.client.command.registerJudgeGameCommand
 import com.pixelknights.bridgesgame.client.di.initDi
+import com.pixelknights.bridgesgame.client.render.DotRenderer
+import com.pixelknights.bridgesgame.client.render.LineRenderer
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -13,8 +16,16 @@ class BridgesJudgeClient : ClientModInitializer {
         MOD_LOGGER.info("Initializing BridgesJudge Mod")
         val koin = initDi()
         registerJudgeGameCommand(koin)
+        renderDebugObjects(koin.koin.get(), koin.koin.get())
     }
 
+}
+
+fun renderDebugObjects(dotRenderer: DotRenderer, lineRenderer: LineRenderer) {
+    WorldRenderEvents.AFTER_ENTITIES.register { context ->
+        dotRenderer.renderDots(context)
+        lineRenderer.renderLines(context)
+    }
 }
 
 const val MOD_ID = "bridges-judge"
