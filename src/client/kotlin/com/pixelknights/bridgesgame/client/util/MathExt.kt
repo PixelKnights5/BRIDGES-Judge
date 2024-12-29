@@ -3,11 +3,7 @@ package com.pixelknights.bridgesgame.client.util
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sign
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
 
 fun ClosedFloatingPointRange<Double>.randomFloat(): Float {
@@ -32,11 +28,17 @@ fun Vec3i.distanceTo(other: Vec3i): Double {
 }
 
 
+/**
+ * Rotate a 2D vector by a given number of degrees.
+ * This ONLY works if the degrees are divisible by 90.
+ */
 fun Vec3i.rotateBy(degrees: Int): Vec3i {
     // 2D rotation matrix:
     // [x', z'] = | cos(theta)  -sin(theta) | * | x |
     //            | sin(theta)   cos(theta) |   | z |
     val rad = Math.toRadians(degrees.toDouble())
+    // Convert to integers to avoid floating point errors
+    // This will work for numbers divisible by 90 because the result of sin and cos will be -1, 0, or 1
     val sinAngle = sin(rad).toInt()
     val cosAngle = cos(rad).toInt()
     val x = ((this.x * cosAngle) - (this.z * sinAngle))

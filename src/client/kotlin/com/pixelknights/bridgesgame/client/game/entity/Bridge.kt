@@ -26,7 +26,7 @@ data class Bridge (
                 (startNode == other.endNode   && endNode == other.startNode))
     }
 
-    override fun hashCode() = Objects.hash(startNode, endNode)
+    override fun hashCode() = Objects.hash(startNode, endNode) + Objects.hash(endNode, startNode)
 
     override fun toString(): String {
         return "Bridge(blocks=$blocks, startNode=$startNode, endNode=$endNode, owner=$owner, painter=$painter)"

@@ -13,7 +13,7 @@ class BridgeScanner (
     private val mc: MinecraftClient,
 ) {
 
-    fun getBridgesForNode(node: Node, allNodes: List<Node>): List<Bridge> {
+    fun getBridgesForNode(node: Node, allNodes: List<Node>): Set<Bridge> {
         return BridgeTemplate.ALL_BRIDGE_COMBINATIONS.flatten().map { template ->
 
             // Don't check against the wrong set of templates.
@@ -47,7 +47,7 @@ class BridgeScanner (
                 painter = painter,
                 errors = errors,
             )
-        }.filterNotNull()
+        }.filterNotNull().toSet()
     }
 
 

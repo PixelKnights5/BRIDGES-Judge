@@ -14,7 +14,7 @@ class GameBoard constructor(
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
-    private var bridges = mutableListOf<Bridge>()
+    private var bridges = mutableSetOf<Bridge>()
 
     fun scanGame(centerCoordinate: BlockPos) {
         bridges.clear()
