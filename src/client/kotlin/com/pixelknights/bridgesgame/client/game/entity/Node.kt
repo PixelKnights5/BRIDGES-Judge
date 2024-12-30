@@ -20,7 +20,7 @@ data class Node(
     val floor: Floor,
     val worldCoords: BlockPos,
 ) {
-    lateinit var connectedBridges: Set<Bridge>
+    val connectedBridges: MutableSet<Bridge> = mutableSetOf()
 
     companion object {
         const val DISTANCE_FROM_CENTER = 2

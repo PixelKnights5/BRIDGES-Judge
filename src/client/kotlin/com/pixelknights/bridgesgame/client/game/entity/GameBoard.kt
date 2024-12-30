@@ -52,17 +52,19 @@ class GameBoard constructor(
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
         bridges.forEach { bridge ->
-            if (bridge.errors.isEmpty()) {
-                val start = bridge.startNode.worldCoords
-                val end = bridge.endNode?.worldCoords
+            val startNode = bridge.startNode
+            val endNode = bridge.endNode
 
-                if (end != null) {
-                    val line = DebugLine(start, end, Color.BLACK)
-                    lineRenderer.linesToRender += line
-                    dotRenderer.dotsToRender += line.dots
-                } else {
-                    dotRenderer.dotsToRender += DebugDot(start, Color.WHITE, 0f)
-                }
+            startNode.connectedBridges += bridge
+            endNode?.connectedBridges += bridge
+
+            // Draw debug lines/dots
+            if (endNode != null) {
+                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.BLACK)
+                lineRenderer.linesToRender += line
+                dotRenderer.dotsToRender += line.dots
+            } else {
+                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
             }
         }
 
