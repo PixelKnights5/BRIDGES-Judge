@@ -1,16 +1,23 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
+import net.minecraft.block.LadderBlock
+import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Direction
 import org.koin.core.component.KoinComponent
+import com.pixelknights.bridgesgame.client.util.plus
 
-class GameBoard constructor(
+class GameBoard(
     private val towerScanner: TowerScanner,
     private val bridgeScanner: BridgeScanner,
     private val dotRenderer: DotRenderer,
     private val lineRenderer: LineRenderer,
+    private val config: ModConfig,
+    private val mc: MinecraftClient,
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
@@ -21,34 +28,26 @@ class GameBoard constructor(
         towers = towerScanner.getTowers(centerCoordinate)
 
         // Get a mapping from floorNum -> every node on that floor
-        val nodeMap = towers.asSequence().flatten().map { it.floors }.flatten().map { it.nodes }.flatten().toList()
-//            .groupBy { it.floorNumber }
-//            .map {
-//                val key = it.key
-//                val value = it.value.map { floor ->
-//                    floor.nodes
-//                }.flatten()
-//                return@map key to value
-//            }.toMap()
+        val nodeMap = towers
+            .asSequence()
+            .flatten()
+            .map { it.floors }
+            .flatten()
+            .map { it.nodes }
+            .flatten()
+            .toList()
 
-//        nodeMap.forEach { kv ->
-//            val floor = kv.key
-//            val nodes = kv.value
-//            val floorBridges = nodes.map { node ->
-//                val floorNodes = nodeMap[floor] ?: throw NullPointerException()
-//                val bridges = bridgeScanner.getBridgesForNode(node, floorNodes)
-//
-//                if (bridges.size > 1) {
-//                    logger.error("Found a node with multiple bridges: $node")
-//                }
-//                return@map bridges
-//            }.flatten()
-//            bridges += floorBridges
-//        }
+
         nodeMap.forEach { node ->
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
+        createDebugLines()
+        println("Bridges! Found ${bridges.size} bridges!")
+    }
+
+    fun createDebugLines() {
+        // TODO: Consider moving this to a separate class
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
         bridges.forEach { bridge ->
@@ -68,7 +67,28 @@ class GameBoard constructor(
             }
         }
 
-        println("Bridges! Found ${bridges.size} bridges!")
+        val ladderFloors = towers
+            .asSequence()
+            .flatten()
+            .map { it.floors }
+            .flatten()
+            .filter { it.hasLadder }
+            .toList()
+
+        ladderFloors.forEach { floor ->
+            // offset the coords by 1 block in the direction the ladder is facing so the line doesn't get hidden
+            // inside of the beacon beam
+            val ladderBlock = mc.world?.getBlockState(floor.worldCenter)
+            val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
+            val startPos = floor.worldCenter + facing.vector
+            val endPath = startPos.up(config.towerConfig.blocksBetweenFloors)
+
+            val line = DebugLine(startPos, endPath, Color.BLACK, noise = 0f)
+            lineRenderer.linesToRender += line
+            dotRenderer.dotsToRender += line.dots
+
+        }
+
     }
 
     fun validateGame() {
