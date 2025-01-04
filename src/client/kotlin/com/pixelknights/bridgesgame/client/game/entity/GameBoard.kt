@@ -10,6 +10,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import org.koin.core.component.KoinComponent
 import com.pixelknights.bridgesgame.client.util.plus
+import org.apache.logging.log4j.Logger
 
 class GameBoard(
     private val towerScanner: TowerScanner,
@@ -18,6 +19,7 @@ class GameBoard(
     private val lineRenderer: LineRenderer,
     private val config: ModConfig,
     private val mc: MinecraftClient,
+    private val logger: Logger
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
@@ -42,6 +44,7 @@ class GameBoard(
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
+        validateGame()
         createDebugLines()
         println("Bridges! Found ${bridges.size} bridges!")
     }
@@ -91,8 +94,10 @@ class GameBoard(
 
     }
 
+
     fun validateGame() {
-        TODO()
+
+        logger.info("Validating game...")
     }
 
 }

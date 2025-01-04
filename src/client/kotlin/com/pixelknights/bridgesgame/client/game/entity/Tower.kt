@@ -1,5 +1,6 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
+import com.google.common.base.Objects
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import net.minecraft.util.math.BlockPos
 
@@ -26,5 +27,30 @@ class Tower(
 
         return BlockPos(worldX, centerTowerPos.y, worldZ)
     }
+
+    /**
+     * Calculate the points that a a tower is worth for a given team. Does not validate if the tower is captured.
+     */
+    fun getCapturePoints(team: GameColor): Int {
+        return when (color) {
+            GameColor.WHITE -> 3
+            team -> 1
+            else -> 2
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Tower) return false
+
+        if (row != other.row) return false
+        if (column != other.column) return false
+
+        return true
+    }
+
+    override fun hashCode() = Objects.hashCode(row, column)
+
+
 
 }

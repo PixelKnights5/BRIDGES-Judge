@@ -49,7 +49,7 @@ class LineRenderer {
             (line.start.z - cameraPos.z + 0.5).toFloat()
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
-            .normal(0f, 0f, 0f)
+            .normal(1f, 1f, 1f)
 
         consumer.vertex(
             matrix,
@@ -58,7 +58,7 @@ class LineRenderer {
             (line.end.z - cameraPos.z + 0.5).toFloat()
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
-            .normal(0f, 0f, 0f)
+            .normal(1f, 1f, 1f)
     }
 }
 
