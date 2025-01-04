@@ -3,18 +3,19 @@ package com.pixelknights.bridgesgame.client.game.entity
 enum class GameColor(
     val colorCode: String,
     val blockColor: String?,
-    val isTeam: Boolean
+    val isTeam: Boolean,
+    val rgba: Long,
 ) {
 
 
-    ORANGE("o", "orange", true),
-    YELLOW("y", "yellow", true),
-    GREEN("g", "lime", true),
-    CYAN("b", "cyan", true),
-    MAGENTA("m", "magenta", true),
-    RED("r", "red", true),
-    WHITE("w", null, false),
-    GREY("x", null, false);
+    ORANGE("o", "orange", true, 0xFFAA00FF),
+    YELLOW("y", "yellow", true, 0xFFFF00FF),
+    GREEN("g", "lime", true, 0x00AA00FF),
+    CYAN("b", "cyan", true, 0x00FFFFFF),
+    MAGENTA("m", "magenta", true, 0xFF00FFFF),
+    RED("r", "red", true, 0xFF0000FF),
+    WHITE("w", null, false, 0xFFFFFFFF),
+    GREY("x", null, false, 0x808080FF);
 
 
     companion object {

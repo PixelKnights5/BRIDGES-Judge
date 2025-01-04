@@ -23,20 +23,22 @@ class GameBoard(
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
-    private var bridges = mutableSetOf<Bridge>()
+    private var bridges: MutableSet<Bridge> = mutableSetOf()
+    private val paths: MutableList<Path> = mutableListOf()
 
     fun scanGame(centerCoordinate: BlockPos) {
         bridges.clear()
+        paths.clear()
+        lineRenderer.linesToRender.clear()
+        dotRenderer.dotsToRender.clear()
         towers = towerScanner.getTowers(centerCoordinate)
 
         // Get a mapping from floorNum -> every node on that floor
         val nodeMap = towers
             .asSequence()
             .flatten()
-            .map { it.floors }
-            .flatten()
-            .map { it.nodes }
-            .flatten()
+            .flatMap { it.floors }
+            .flatMap { it.nodes }
             .toList()
 
 
@@ -44,6 +46,7 @@ class GameBoard(
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
+        connectBridges()
         validateGame()
         createDebugLines()
         println("Bridges! Found ${bridges.size} bridges!")
@@ -51,30 +54,17 @@ class GameBoard(
 
     fun createDebugLines() {
         // TODO: Consider moving this to a separate class
-        lineRenderer.linesToRender.clear()
-        dotRenderer.dotsToRender.clear()
-        bridges.forEach { bridge ->
-            val startNode = bridge.startNode
-            val endNode = bridge.endNode
 
-            startNode.connectedBridges += bridge
-            endNode?.connectedBridges += bridge
-
-            // Draw debug lines/dots
-            if (endNode != null) {
-                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.BLACK)
-                lineRenderer.linesToRender += line
-                dotRenderer.dotsToRender += line.dots
-            } else {
-                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
-            }
+        paths.forEach { path ->
+            val lines = path.createDebugLines()
+            lineRenderer.linesToRender += lines
+            dotRenderer.dotsToRender += lines.flatMap { it.dots }
         }
 
         val ladderFloors = towers
             .asSequence()
             .flatten()
-            .map { it.floors }
-            .flatten()
+            .flatMap { it.floors }
             .filter { it.hasLadder }
             .toList()
 
@@ -94,10 +84,52 @@ class GameBoard(
 
     }
 
+    private fun connectBridges() {
+        bridges.forEach { bridge ->
+            val startNode = bridge.startNode
+            val endNode = bridge.endNode
+
+            startNode.connectedBridges += bridge
+            endNode?.connectedBridges += bridge
+
+            // Draw debug lines/dots
+//            if (endNode != null) {
+//                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.fromHex(bridge.owner?.rgba ?: 0))
+//                lineRenderer.linesToRender += line
+//                dotRenderer.dotsToRender += line.dots
+//            } else {
+//                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
+//            }
+        }
+    }
 
     fun validateGame() {
+        // TODO: generate paths for disconnected bridge networks
+        buildTeamPaths()
 
         logger.info("Validating game...")
+    }
+
+    /**
+     * Generate paths starting from the base tower for each team
+     */
+    private fun buildTeamPaths() {
+        paths += GameColor.entries
+            .filter { it.isTeam }
+            .map { team -> Path(team) }
+            .toList()
+
+        paths.forEach { path ->
+            val allTowers = towers.asSequence().flatten()
+
+            val baseFloor = allTowers
+                .filter { tower -> tower.color == path.pathOwner && tower.isBase }
+                .flatMap { tower -> tower.floors }
+                .first { floor -> floor.floorNumber == 0 }
+
+
+            path.buildPath(baseFloor, allTowers.toList())
+        }
     }
 
 }
