@@ -10,6 +10,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import org.koin.core.component.KoinComponent
 import com.pixelknights.bridgesgame.client.util.plus
+import net.minecraft.client.world.ClientWorld
 import org.apache.logging.log4j.Logger
 
 class GameBoard(
@@ -25,12 +26,19 @@ class GameBoard(
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
+    private val teams: MutableMap<GameColor, Team> = mutableMapOf()
 
     fun scanGame(centerCoordinate: BlockPos) {
         bridges.clear()
         paths.clear()
+        teams.clear()
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
+
+        teams += GameColor.entries.associate { color ->
+            color to Team().apply { baseColor = color }
+        }
+
         towers = towerScanner.getTowers(centerCoordinate)
 
         // Get a mapping from floorNum -> every node on that floor
@@ -47,7 +55,7 @@ class GameBoard(
         }
 
         connectBridges()
-        validateGame()
+        calculateScores()
         createDebugLines()
         println("Bridges! Found ${bridges.size} bridges!")
     }
@@ -103,11 +111,43 @@ class GameBoard(
         }
     }
 
-    fun validateGame() {
+    private fun calculateScores() {
+        logger.info("Validating game...")
+
+        val world = mc.world
+        if (world == null) {
+            logger.error("World is null")
+            return
+        }
+
         // TODO: generate paths for disconnected bridge networks
         buildTeamPaths()
+        validateTowerCaptures(world)
 
-        logger.info("Validating game...")
+        // Calculate scores
+        paths.forEach { path ->
+            if (path.pathOwner != null) {
+                val numCapturedTowers = towers
+                    .asSequence()
+                    .flatten()
+                    .count { it.capturingTeam == path.pathOwner }
+
+                teams[path.pathOwner]?.capturedTowers = numCapturedTowers
+                teams[path.pathOwner]?.points = path.calculateScore()
+            }
+        }
+
+        logger.info("Teams = $teams")
+    }
+
+    /**
+     * Validate tower captures.
+     * Must be called AFTER paths are generated
+     */
+    private fun validateTowerCaptures(world: ClientWorld) {
+        towers.flatten().forEach { tower ->
+            tower.setCapturingTeam(world, config)
+        }
     }
 
     /**

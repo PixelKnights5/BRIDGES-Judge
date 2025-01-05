@@ -25,7 +25,7 @@ class JudgeGameCommand (
 
     override fun run(ctx: CommandContext<FabricClientCommandSource>): Int {
 //        val playerPosition = mc.player?.pos
-        val playerPosition = Vec3d(534.0, 150.0, 314.0)
+        val playerPosition = Vec3d(249.0, -39.0, 136.0)
         dotRenderer.dotsToRender.clear()
         lineRenderer.linesToRender.clear()
 

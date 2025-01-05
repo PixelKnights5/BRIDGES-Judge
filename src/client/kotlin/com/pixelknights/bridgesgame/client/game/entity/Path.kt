@@ -15,17 +15,19 @@ class Path (
     }
 
 
-    fun calculatePathScore(): Int {
+    fun calculateScore(): Int {
         if (pathOwner == null) {
             return 0
         }
 
         val capturedFloorPoints = floors.count { it.owner == pathOwner }
 
-        val towers = floors.map { it.tower }.toSet()
-        val capturedTowerPoints = towers.sumOf {
-            when (it.isCaptureValidated) {
-                true -> it.getCapturePoints(pathOwner)
+        val towers = floors.asSequence()
+            .map { it.tower }
+            .toSet()
+        val capturedTowerPoints = towers.sumOf { tower ->
+            when (tower.capturingTeam) {
+                pathOwner -> tower.getCapturePoints(pathOwner)
                 else -> 0
             }
         }
@@ -33,6 +35,10 @@ class Path (
         return capturedFloorPoints + capturedTowerPoints
     }
 
+    /**
+     * Build a bridge network and validate floors along the way.
+     * The [startingFloor] must already be connected to the existing path
+     */
     fun buildPath(startingFloor: Floor, allTowers: List<Tower>) {
         if (startingFloor in floors) {
             return
@@ -73,7 +79,8 @@ class Path (
         // Take all usable bridges
         for (node in startingFloor.nodes) {
             if (node.connectedBridges.size > 1) {
-                println("Node at ${node.worldCoords} is connected to multiple bridges")
+//                println("Node at ${node.worldCoords} is connected to multiple bridges")
+//                continue
             }
 
             // TODO: Choose the bridge that is most beneficial to the team
