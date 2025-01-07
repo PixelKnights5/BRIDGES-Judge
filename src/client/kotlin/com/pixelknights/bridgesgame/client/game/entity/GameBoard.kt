@@ -64,30 +64,9 @@ class GameBoard(
         // TODO: Consider moving this to a separate class
 
         paths.forEach { path ->
-            val lines = path.createDebugLines()
+            val lines = path.createDebugLines(mc.world!!, config)
             lineRenderer.linesToRender += lines
             dotRenderer.dotsToRender += lines.flatMap { it.dots }
-        }
-
-        val ladderFloors = towers
-            .asSequence()
-            .flatten()
-            .flatMap { it.floors }
-            .filter { it.hasLadder }
-            .toList()
-
-        ladderFloors.forEach { floor ->
-            // offset the coords by 1 block in the direction the ladder is facing so the line doesn't get hidden
-            // inside of the beacon beam
-            val ladderBlock = mc.world?.getBlockState(floor.worldCenter)
-            val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
-            val startPos = floor.worldCenter + facing.vector
-            val endPath = startPos.up(config.towerConfig.blocksBetweenFloors)
-
-            val line = DebugLine(startPos, endPath, Color.BLACK, noise = 0f)
-            lineRenderer.linesToRender += line
-            dotRenderer.dotsToRender += line.dots
-
         }
 
     }

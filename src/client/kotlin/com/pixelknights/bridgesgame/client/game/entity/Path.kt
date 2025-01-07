@@ -1,7 +1,12 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.render.Color
 import com.pixelknights.bridgesgame.client.render.DebugLine
+import net.minecraft.block.LadderBlock
+import net.minecraft.util.math.Direction
+import net.minecraft.world.World
+import com.pixelknights.bridgesgame.client.util.plus
 
 
 class Path (
@@ -49,7 +54,7 @@ class Path (
             startingFloor.isCaptureValidated = containsBaseTower
         }
         if (startingFloor.paintColor == pathOwner) {
-            startingFloor.isPaintValidated = containsBaseTower()
+            startingFloor.isPaintValidated = containsBaseTower
         }
 
         floors += startingFloor
@@ -111,14 +116,30 @@ class Path (
         }
     }
 
-    fun createDebugLines(): List<DebugLine> {
+    fun createDebugLines(world: World, config: ModConfig): List<DebugLine> {
         val color = Color.fromHex(pathOwner?.rgba ?: 0)
 
-        return bridges.map {
+        val bridgeLines = bridges.map {
             if (it.endNode == null) {
                 return@map null
             }
             return@map DebugLine(it.startNode.worldCoords, it.endNode.worldCoords, color)
         }.filterNotNull().toList()
+
+        val ladderLines = floors
+            .filter { it.hasLadder }
+            .map { floor ->
+                // offset the coords by 1 block in the direction the ladder is facing so the line doesn't get hidden
+                // inside of the beacon beam
+                val ladderBlock = world.getBlockState(floor.worldCenter)
+                val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
+                val startPos = floor.worldCenter + facing.vector
+                val endPath = startPos.up(config.towerConfig.blocksBetweenFloors)
+
+                DebugLine(startPos, endPath, color)
+            }
+            .toList()
+
+        return bridgeLines + ladderLines
     }
 }
