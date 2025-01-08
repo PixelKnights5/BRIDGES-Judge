@@ -41,24 +41,25 @@ class LineRenderer {
         val consumer = vertexConsumers.getBuffer(RenderLayer.LINES)
         val matrix = matrices.peek().positionMatrix
 
+        val noiseVector = line.noiseVector
         // Set the star and end points of the line to be rendered with noise along the Y axis to distinguish overlapping lines
         consumer.vertex(
             matrix,
-            (line.start.x - cameraPos.x + 0.5).toFloat(),
-            (line.start.y - cameraPos.y + 0.5 + line.noise).toFloat(),
-            (line.start.z - cameraPos.z + 0.5).toFloat()
+            (line.start.x - cameraPos.x + 0.5 + noiseVector.x).toFloat(),
+            (line.start.y - cameraPos.y + 0.5 + noiseVector.y).toFloat(),
+            (line.start.z - cameraPos.z + 0.5 + noiseVector.z).toFloat()
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
-            .normal(0f, 0f, 0f)
+            .normal(1f, 1f, 1f)
 
         consumer.vertex(
             matrix,
-            (line.end.x - cameraPos.x + 0.5).toFloat(),
-            (line.end.y - cameraPos.y + 0.5 + line.noise).toFloat(),
-            (line.end.z - cameraPos.z + 0.5).toFloat()
+            (line.end.x - cameraPos.x + 0.5 + noiseVector.x).toFloat(),
+            (line.end.y - cameraPos.y + 0.5 + noiseVector.y).toFloat(),
+            (line.end.z - cameraPos.z + 0.5 + noiseVector.z).toFloat()
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
-            .normal(0f, 0f, 0f)
+            .normal(1f, 1f, 1f)
     }
 }
 

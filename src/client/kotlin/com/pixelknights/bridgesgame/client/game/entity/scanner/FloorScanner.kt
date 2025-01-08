@@ -35,6 +35,7 @@ class FloorScanner(
         val floor = Floor(
             floorNumber = floorNum,
             hasLadder = hasLadder,
+            tower = tower,
             worldCenter = worldCenterPosition,
             captureColor = claimingTeam,
             paintColor = paintingTeam

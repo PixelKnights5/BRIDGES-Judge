@@ -1,7 +1,8 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
-class Team {
-    var capturedTowers: Int = 0
-    var points: Int = 0
-    var baseColor: GameColor? = null
+data class Team (
+    var capturedTowers: Int = 0,
+    var points: Int = 0,
+){
+    lateinit var baseColor: GameColor
 }

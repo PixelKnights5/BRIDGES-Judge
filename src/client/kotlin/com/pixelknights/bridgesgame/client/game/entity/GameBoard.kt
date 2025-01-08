@@ -1,76 +1,154 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
+import net.minecraft.block.LadderBlock
+import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Direction
 import org.koin.core.component.KoinComponent
+import com.pixelknights.bridgesgame.client.util.plus
+import net.minecraft.client.world.ClientWorld
+import org.apache.logging.log4j.Logger
 
-class GameBoard constructor(
+class GameBoard(
     private val towerScanner: TowerScanner,
     private val bridgeScanner: BridgeScanner,
     private val dotRenderer: DotRenderer,
     private val lineRenderer: LineRenderer,
+    private val config: ModConfig,
+    private val mc: MinecraftClient,
+    private val logger: Logger
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
-    private var bridges = mutableSetOf<Bridge>()
+    private var bridges: MutableSet<Bridge> = mutableSetOf()
+    private val paths: MutableList<Path> = mutableListOf()
+    private val teams: MutableMap<GameColor, Team> = mutableMapOf()
 
     fun scanGame(centerCoordinate: BlockPos) {
         bridges.clear()
+        paths.clear()
+        teams.clear()
+        lineRenderer.linesToRender.clear()
+        dotRenderer.dotsToRender.clear()
+
+        teams += GameColor.entries.associate { color ->
+            color to Team().apply { baseColor = color }
+        }
+
         towers = towerScanner.getTowers(centerCoordinate)
 
         // Get a mapping from floorNum -> every node on that floor
-        val nodeMap = towers.asSequence().flatten().map { it.floors }.flatten().map { it.nodes }.flatten().toList()
-//            .groupBy { it.floorNumber }
-//            .map {
-//                val key = it.key
-//                val value = it.value.map { floor ->
-//                    floor.nodes
-//                }.flatten()
-//                return@map key to value
-//            }.toMap()
+        val nodeMap = towers
+            .asSequence()
+            .flatten()
+            .flatMap { it.floors }
+            .flatMap { it.nodes }
+            .toList()
 
-//        nodeMap.forEach { kv ->
-//            val floor = kv.key
-//            val nodes = kv.value
-//            val floorBridges = nodes.map { node ->
-//                val floorNodes = nodeMap[floor] ?: throw NullPointerException()
-//                val bridges = bridgeScanner.getBridgesForNode(node, floorNodes)
-//
-//                if (bridges.size > 1) {
-//                    logger.error("Found a node with multiple bridges: $node")
-//                }
-//                return@map bridges
-//            }.flatten()
-//            bridges += floorBridges
-//        }
+
         nodeMap.forEach { node ->
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
-        lineRenderer.linesToRender.clear()
-        dotRenderer.dotsToRender.clear()
-        bridges.forEach { bridge ->
-            if (bridge.errors.isEmpty()) {
-                val start = bridge.startNode.worldCoords
-                val end = bridge.endNode?.worldCoords
-
-                if (end != null) {
-                    val line = DebugLine(start, end, Color.BLACK)
-                    lineRenderer.linesToRender += line
-                    dotRenderer.dotsToRender += line.dots
-                } else {
-                    dotRenderer.dotsToRender += DebugDot(start, Color.WHITE, 0f)
-                }
-            }
-        }
-
+        connectBridges()
+        calculateScores()
+        createDebugLines()
         println("Bridges! Found ${bridges.size} bridges!")
     }
 
-    fun validateGame() {
-        TODO()
+    fun createDebugLines() {
+        // TODO: Consider moving this to a separate class
+
+        paths.forEach { path ->
+            val lines = path.createDebugLines(mc.world!!, config)
+            lineRenderer.linesToRender += lines
+            dotRenderer.dotsToRender += lines.flatMap { it.dots }
+        }
+
+    }
+
+    private fun connectBridges() {
+        bridges.forEach { bridge ->
+            val startNode = bridge.startNode
+            val endNode = bridge.endNode
+
+            startNode.connectedBridges += bridge
+            endNode?.connectedBridges += bridge
+
+            // Draw debug lines/dots
+//            if (endNode != null) {
+//                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.fromHex(bridge.owner?.rgba ?: 0))
+//                lineRenderer.linesToRender += line
+//                dotRenderer.dotsToRender += line.dots
+//            } else {
+//                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
+//            }
+        }
+    }
+
+    private fun calculateScores() {
+        logger.info("Validating game...")
+
+        val world = mc.world
+        if (world == null) {
+            logger.error("World is null")
+            return
+        }
+
+        // TODO: generate paths for disconnected bridge networks
+        buildTeamPaths()
+        validateTowerCaptures(world)
+
+        // Calculate scores
+        paths.forEach { path ->
+            if (path.pathOwner != null) {
+                val numCapturedTowers = towers
+                    .asSequence()
+                    .flatten()
+                    .count { it.capturingTeam == path.pathOwner }
+
+                teams[path.pathOwner]?.capturedTowers = numCapturedTowers
+                teams[path.pathOwner]?.points = path.calculateScore()
+            }
+        }
+
+        logger.info("Teams = $teams")
+    }
+
+    /**
+     * Validate tower captures.
+     * Must be called AFTER paths are generated
+     */
+    private fun validateTowerCaptures(world: ClientWorld) {
+        towers.flatten().forEach { tower ->
+            tower.setCapturingTeam(world, config)
+        }
+    }
+
+    /**
+     * Generate paths starting from the base tower for each team
+     */
+    private fun buildTeamPaths() {
+        paths += GameColor.entries
+            .filter { it.isTeam }
+            .map { team -> Path(team) }
+            .toList()
+
+        paths.forEach { path ->
+            val allTowers = towers.asSequence().flatten()
+
+            val baseFloor = allTowers
+                .filter { tower -> tower.color == path.pathOwner && tower.isBase }
+                .flatMap { tower -> tower.floors }
+                .first { floor -> floor.floorNumber == 0 }
+
+
+            path.buildPath(baseFloor, allTowers.toList())
+        }
     }
 
 }

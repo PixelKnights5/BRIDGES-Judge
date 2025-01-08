@@ -32,5 +32,8 @@ data class Bridge (
         return "Bridge(blocks=$blocks, startNode=$startNode, endNode=$endNode, owner=$owner, painter=$painter)"
     }
 
+    fun canTeamUseBridge(team: GameColor): Boolean {
+        return endNode != null && (owner == team || painter == team)
+    }
 
 }

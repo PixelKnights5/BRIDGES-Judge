@@ -33,9 +33,9 @@ class DotRenderer (
         for (dot in dotsToRender) {
             // Translate to the block position
             matrices.translate(
-                dot.position.x - cameraPos.x + 0.5,
-                dot.position.y - cameraPos.y + 0.5 + dot.noise,
-                dot.position.z - cameraPos.z + 0.5
+                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
+                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
+                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
             )
 
             // Draw the dot
@@ -47,9 +47,9 @@ class DotRenderer (
 
             // Reset translation for next dot
             matrices.translate(
-                -(dot.position.x - cameraPos.x + 0.5),
-                -(dot.position.y - cameraPos.y + 0.5 + dot.noise),
-                -(dot.position.z - cameraPos.z + 0.5)
+                -(dot.position.x - cameraPos.x + 0.5 + dot.noise.x),
+                -(dot.position.y - cameraPos.y + 0.5 + dot.noise.y),
+                -(dot.position.z - cameraPos.z + 0.5 + dot.noise.z)
             )
         }
 

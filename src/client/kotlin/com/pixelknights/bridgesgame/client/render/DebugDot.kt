@@ -1,9 +1,10 @@
 package com.pixelknights.bridgesgame.client.render
 
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3d
 
-class DebugDot (
+data class DebugDot (
     val position: BlockPos,
     val color: Color,
-    val noise: Float,
+    val noise: Vec3d,
 )
