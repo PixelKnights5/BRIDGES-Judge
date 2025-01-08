@@ -1,17 +1,19 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Vec3i
+import com.pixelknights.bridgesgame.client.util.plus
 
 enum class NodeSide(val vector: Vec3i) {
-    NORTH(Vec3i(0, 0, -1)),
-    EAST(Vec3i(1, 0, 0)),
-    SOUTH(Vec3i(0, 0, 1)),
-    WEST(Vec3i(-1, 0, 0)),
-    NORTHEAST(Vec3i(1, 0, -1)),
-    SOUTHEAST(Vec3i(1, 0, 1)),
-    SOUTHWEST(Vec3i(-1, 0, 1)),
-    NORTHWEST(Vec3i(-1, 0, -1));
+    NORTH(Direction.NORTH.vector),
+    EAST(Direction.EAST.vector),
+    SOUTH(Direction.SOUTH.vector),
+    WEST(Direction.WEST.vector),
+    NORTHEAST(Direction.NORTH.vector + Direction.EAST.vector),
+    SOUTHEAST(Direction.SOUTH.vector + Direction.EAST.vector),
+    SOUTHWEST(Direction.SOUTH.vector + Direction.WEST.vector),
+    NORTHWEST(Direction.NORTH.vector + Direction.WEST.vector);
 }
 
 data class Node(

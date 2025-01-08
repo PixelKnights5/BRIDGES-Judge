@@ -33,7 +33,7 @@ data class Bridge (
     }
 
     fun canTeamUseBridge(team: GameColor): Boolean {
-        return owner == team || painter == team
+        return endNode != null && (owner == team || painter == team)
     }
 
 }

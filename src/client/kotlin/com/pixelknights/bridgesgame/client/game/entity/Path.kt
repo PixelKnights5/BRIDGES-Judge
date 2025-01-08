@@ -83,13 +83,31 @@ class Path (
 
         // Take all usable bridges
         for (node in startingFloor.nodes) {
+            var nextBridge: Bridge? = null
+
             if (node.connectedBridges.size > 1) {
-//                println("Node at ${node.worldCoords} is connected to multiple bridges")
-//                continue
+                // Choose the path that is most beneficial to the team and invalidate the others
+                val allOptions = node.connectedBridges.associate { bridge ->
+                    val pathOption = Path(this.pathOwner).also { copy ->
+                        copy.bridges += (this.bridges + bridge)
+                        copy.floors += (this.floors + startingFloor)
+                    }
+                    if (bridge.endNode != null) {
+                        pathOption.buildPath(bridge.endNode.floor, allTowers)
+                        pathOption.buildPath(bridge.startNode.floor, allTowers)
+                        return@associate bridge to pathOption
+                    } else {
+                        return@associate bridge to null
+                    }
+                }
+                val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
+                nextBridge = bestOption.key
+                
+                // TODO: Send error event for each illegal unused bridge. 
+            } else {
+                nextBridge = node.connectedBridges.firstOrNull()
             }
 
-            // TODO: Choose the bridge that is most beneficial to the team
-            val nextBridge = node.connectedBridges.firstOrNull()
             if ( pathOwner == null || nextBridge == null) {
                 continue
             }
