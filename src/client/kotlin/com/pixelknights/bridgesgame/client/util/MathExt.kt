@@ -3,6 +3,8 @@ package com.pixelknights.bridgesgame.client.util
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
+import org.joml.Matrix4fStack
+import org.joml.Vector3f
 import kotlin.math.*
 
 
@@ -22,11 +24,17 @@ operator fun Vec3d.plus(other: Vec3d): Vec3d = this.add(other)
 operator fun Vec3d.minus(other: Vec3d): Vec3d = this.subtract(other)
 operator fun Vec3d.times(other: Vec3d): Vec3d = this.multiply(other)
 
+operator fun Vector3f.plus(other: Vector3f): Vector3f = this.add(other)
+operator fun Vector3f.minus(other: Vector3f): Vector3f = this.sub(other)
+operator fun Vector3f.times(other: Float): Vector3f = this.mul(other)
+
+fun Vec3i.toVector3f(): Vector3f = Vector3f(this.x.toFloat(), this.y.toFloat(), this.z.toFloat())
 
 fun Vec3i.distanceTo(other: Vec3i): Double {
     return sqrt(this.getSquaredDistance(other))
 }
 
+fun Vec3d.toInt(): Vec3i = Vec3i(this.x.toInt(), this.y.toInt(), this.z.toInt())
 
 /**
  * Rotate a 2D vector by a given number of degrees.
@@ -59,4 +67,8 @@ fun Vec3i.abs(): Vec3i {
         abs(y),
         abs(z)
     )
+}
+
+fun Matrix4fStack.translate(x: Double, y: Double, z: Double) {
+    this.translate(x.toFloat(), y.toFloat(), z.toFloat())
 }

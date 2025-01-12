@@ -4,13 +4,12 @@ import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
-import net.minecraft.block.LadderBlock
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Direction
 import org.koin.core.component.KoinComponent
 import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.client.world.ClientWorld
+import net.minecraft.util.math.Vec3i
 import org.apache.logging.log4j.Logger
 
 class GameBoard(
@@ -20,7 +19,8 @@ class GameBoard(
     private val lineRenderer: LineRenderer,
     private val config: ModConfig,
     private val mc: MinecraftClient,
-    private val logger: Logger
+    private val logger: Logger,
+    private val textRenderer: HoveringTextRenderer,
 ) : KoinComponent {
 
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
@@ -34,12 +34,21 @@ class GameBoard(
         teams.clear()
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
+        textRenderer.textToRender.clear()
 
         teams += GameColor.entries.associate { color ->
             color to Team().apply { baseColor = color }
         }
 
         towers = towerScanner.getTowers(centerCoordinate)
+
+//        val centerTower = towers[9][9]
+//        val position = centerTower.worldCoordinates(centerCoordinate, config) + Vec3i(1, 100, 1)
+//        println("position = $position")
+//        textRenderer.textToRender += HoveringText(position)
+//            .addLine("§nCenter Tower§r", Color.BLUE)
+//            .addLine("Another Line", Color.RED)
+//            .addLine("Another Line Again", Color.GREEN)
 
         // Get a mapping from floorNum -> every node on that floor
         val nodeMap = towers
@@ -57,6 +66,7 @@ class GameBoard(
         connectBridges()
         calculateScores()
         createDebugLines()
+        createTowerStatsText(towers.flatten().toList(), centerCoordinate)
         println("Bridges! Found ${bridges.size} bridges!")
     }
 
@@ -127,6 +137,41 @@ class GameBoard(
         towers.flatten().forEach { tower ->
             tower.setCapturingTeam(world, config)
         }
+    }
+
+    private fun createTowerStatsText(towerList: List<Tower>, centerCoordinate: BlockPos) {
+        for (tower in towerList) {
+            if (tower.capturingTeam == null && tower.floors.all { it.captureColor == null }) {
+                continue
+            }
+
+            val topFloor = tower.floors.maxBy { it.floorNumber }
+            val textHeight = (topFloor.floorNumber + 1) * config.towerConfig.blocksBetweenFloors + 5
+            val position = tower.worldCoordinates(centerCoordinate, config) + Vec3i(1, textHeight, 1)
+
+            val textBlock = HoveringText(position)
+            if (tower.capturingTeam == null) {
+                textBlock.addLine("Tower not captured", Color.WHITE)
+            } else {
+                val color = Color.fromHex(tower.capturingTeam!!.rgba)
+                val pointValue = tower.getCapturePoints(tower.capturingTeam!!)
+                textBlock.addLine("Tower captured by: ${tower.capturingTeam} (+${pointValue})", color)
+            }
+
+            textBlock.addLine("§nFloors:", Color.WHITE)
+            tower.floors
+                .groupBy { it.captureColor }.forEach { team, groupFloors ->
+                    val floorNumbers = groupFloors.map { it.floorNumber + 1 }
+                    if (team == null) {
+                        textBlock.addLine("Uncaptured floors: $floorNumbers", Color.WHITE)
+                    } else {
+                        textBlock.addLine("Team $team captured: $floorNumbers", Color.fromHex(team.rgba))
+                    }
+                }
+
+            textRenderer.textToRender.add(textBlock)
+        }
+
     }
 
     /**
