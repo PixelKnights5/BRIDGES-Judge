@@ -26,7 +26,7 @@ class GameBoard(
     private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
-    private val teams: MutableMap<GameColor, Team> = mutableMapOf()
+    val teams: MutableMap<GameColor, Team> = mutableMapOf()
 
     fun scanGame(centerCoordinate: BlockPos) {
         bridges.clear()

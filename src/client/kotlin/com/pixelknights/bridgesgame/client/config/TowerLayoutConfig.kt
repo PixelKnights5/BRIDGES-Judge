@@ -8,6 +8,8 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Identifier
 import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import kotlin.getValue
 
 class TowerLayoutConfig(
     val logger: Logger
@@ -16,6 +18,9 @@ class TowerLayoutConfig(
     private val heightMap: MutableList<MutableList<Int?>> = mutableListOf()
     private val colorMap: MutableList<MutableList<GameColor?>> = mutableListOf()
     private val baseMap: MutableMap<Array<Int>, GameColor> = mutableMapOf()
+
+    private val mc: MinecraftClient by inject()
+
 
     init {
         MOD_LOGGER.info("Initializing TowerLayoutConfig")
@@ -45,7 +50,7 @@ class TowerLayoutConfig(
 
     private fun loadColorMap() {
         val id = Identifier.of(MOD_ID, COLORMAP_PATH)
-        val resource = MinecraftClient.getInstance().resourceManager.getResource(id)
+        val resource = mc.resourceManager.getResource(id)
 
         if (resource.isEmpty) {
             throw IOException("Color map could not be loaded")
@@ -68,7 +73,7 @@ class TowerLayoutConfig(
 
     private fun loadHeightmap() {
         val id = Identifier.of(MOD_ID, HEIGHTMAP_PATH)
-        val resource = MinecraftClient.getInstance().resourceManager.getResource(id)
+        val resource = mc.resourceManager.getResource(id)
 
         if (resource.isEmpty) {
             throw IOException("Height map could not be loaded")

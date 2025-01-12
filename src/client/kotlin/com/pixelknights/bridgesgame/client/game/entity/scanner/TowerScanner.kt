@@ -5,12 +5,14 @@ import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import com.pixelknights.bridgesgame.client.game.entity.Tower
 import net.minecraft.util.math.BlockPos
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class TowerScanner(
     private val config: ModConfig,
-    private val layout: TowerLayoutConfig,
     private val floorScanner: FloorScanner
 ): KoinComponent {
+
+    private val layout: TowerLayoutConfig by inject()
 
     private fun getTower(row: Int, col: Int, centerCoordinate: BlockPos): Tower? {
         val numFloors = layout.getHeight(row, col) ?: return null
