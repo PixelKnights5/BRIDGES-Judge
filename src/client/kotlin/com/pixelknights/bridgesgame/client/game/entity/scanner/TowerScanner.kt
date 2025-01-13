@@ -34,7 +34,7 @@ class TowerScanner(
         return tower
     }
 
-    fun getTowers(centerCoordinate: BlockPos): List<List<Tower>> {
+    fun getTowers(centerCoordinate: BlockPos): MutableList<MutableList<Tower>> {
         val towerList = mutableListOf<MutableList<Tower>>()
         for (row in 0..<config.boardConfig.height) {
             val rowTowers = mutableListOf<Tower>()

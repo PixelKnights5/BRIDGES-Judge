@@ -23,18 +23,13 @@ class GameBoard(
     private val textRenderer: HoveringTextRenderer,
 ) : KoinComponent {
 
-    private var towers: List<List<Tower>> = mutableListOf<MutableList<Tower>>()
+    private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
     val teams: MutableMap<GameColor, Team> = mutableMapOf()
 
     fun scanGame(centerCoordinate: BlockPos) {
-        bridges.clear()
-        paths.clear()
-        teams.clear()
-        lineRenderer.linesToRender.clear()
-        dotRenderer.dotsToRender.clear()
-        textRenderer.textToRender.clear()
+        resetGame()
 
         teams += GameColor.entries.associate { color ->
             color to Team().apply { baseColor = color }
@@ -67,7 +62,16 @@ class GameBoard(
         calculateScores()
         createDebugLines()
         createTowerStatsText(towers.flatten().toList(), centerCoordinate)
-        println("Bridges! Found ${bridges.size} bridges!")
+    }
+
+    fun resetGame() {
+        bridges.clear()
+        paths.clear()
+        teams.clear()
+        towers.clear()
+        lineRenderer.linesToRender.clear()
+        dotRenderer.dotsToRender.clear()
+        textRenderer.textToRender.clear()
     }
 
     fun createDebugLines() {

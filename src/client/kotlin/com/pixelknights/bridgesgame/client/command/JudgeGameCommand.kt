@@ -31,6 +31,7 @@ class JudgeGameCommand (
         return when (action) {
             "scan" -> handleScanAction(ctx)
             "setCenterTower" -> handleSetCenterTowerAction(ctx)
+            "clear" -> handleClearAction()
             else -> commandNotImplemented(ctx)
         }
     }
@@ -44,6 +45,11 @@ class JudgeGameCommand (
         gameBoard.scanGame(centerPosition)
         ctx.source.sendFeedback(getScoreText())
 
+        return 0
+    }
+
+    fun handleClearAction(): Int {
+        gameBoard.resetGame()
         return 0
     }
 
