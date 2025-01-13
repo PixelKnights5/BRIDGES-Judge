@@ -32,7 +32,7 @@ class BridgeScanner (
                 return@map null
             }
 
-            val painter = template.findBridgeOwner(mc, node.worldCoords.down(1))
+            val painter = template.findBridgePainter(mc, node.worldCoords.down(1))
             val endNode = allNodes.filter { it.worldCoords == (node.worldCoords + template.targetNodeOffset) }
 
             if (endNode.isEmpty()) {

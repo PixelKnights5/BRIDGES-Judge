@@ -41,9 +41,29 @@ class BridgeTemplate(
     }
 
 
+    fun findBridgePainter(mc: MinecraftClient, nodeCoords: BlockPos): GameColor? {
+        val nodeTemplate = this.translate(nodeCoords)
+        val blockColors = nodeTemplate.blockCoords.map {
+            mc.world?.getBlockState(it)
+        }.map {
+            getTeamColorForBlock(it?.block)
+        }.groupBy { it }.map { it.key to it.value.size }
+        val primaryColor = blockColors.filter { it.first != null }.maxByOrNull { it.second }
+        if (primaryColor == null) {
+            return null
+        }
+        val numMissingBlocks = nodeTemplate.blockCoords.size - primaryColor.second
+
+
+        return if (numMissingBlocks <= (nodeTemplate.blockCoords.size / 2) + 1) {
+            primaryColor.first
+        } else {
+            null
+        }
+    }
+
     /**
      * Check who owns this bridge (if anyone). Returns `null` if this bridge does not exist.
-     * This can also be used to detect paints by shifting [nodeCoords] +1 in the Y axis
      */
     fun findBridgeOwner(mc: MinecraftClient, nodeCoords: BlockPos): GameColor? {
         val nodeTemplate = this.translate(nodeCoords)
