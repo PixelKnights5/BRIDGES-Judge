@@ -20,7 +20,10 @@ class CommandRegistry(
             dispatcher.register(
                 literal("bridges").then (
                     argument("action", StringArgumentType.string())
-                        .suggests(ArrayCompletionProvider("scan", "setCenterTower", "clear", "showPathLines", "hidePathLines"))
+                        .suggests(ArrayCompletionProvider(
+                            "scan", "setCenterTower", "clear", "showPathLines", "hidePathLines", "showTowerText",
+                            "hideTowerText")
+                        )
                         .executes(judgeGameCommand)
                 )
 

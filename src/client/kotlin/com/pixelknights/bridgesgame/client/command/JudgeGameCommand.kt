@@ -34,6 +34,8 @@ class JudgeGameCommand (
             "clear" -> handleClearAction(ctx)
             "showPathLines" -> handlePathLineVisibility(ctx, true)
             "hidePathLines" -> handlePathLineVisibility(ctx, false)
+            "showTowerText" -> handleTowerStateVisibility(ctx, true)
+            "hideTowerText" -> handleTowerStateVisibility(ctx, false)
             else -> commandNotImplemented(ctx)
         }
     }
@@ -55,6 +57,20 @@ class JudgeGameCommand (
         ctx.source.sendFeedback(Text.of("Game state cleared"))
         return 0
     }
+
+    private fun handleTowerStateVisibility(ctx: CommandContext<FabricClientCommandSource>, isVisible: Boolean): Int {
+        config.playerSettings.showTowerState = isVisible
+        config.save()
+
+        if (isVisible) {
+            ctx.source.sendFeedback(Text.of("Showing tower text"))
+        } else {
+            ctx.source.sendFeedback(Text.of("Hiding tower text"))
+        }
+
+        return 0
+    }
+
 
     private fun handlePathLineVisibility(ctx: CommandContext<FabricClientCommandSource>, isVisible: Boolean): Int {
         config.playerSettings.showBridgePaths = isVisible

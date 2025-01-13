@@ -1,14 +1,19 @@
 package com.pixelknights.bridgesgame.client.render
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.minecraft.client.render.*
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4f
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import kotlin.getValue
 
-class DotRenderer (
-) {
+class DotRenderer : KoinComponent {
     val dotsToRender: MutableSet<DebugDot> = mutableSetOf()
+
+    val config: ModConfig by inject()
 
     // Store positions where dots should be rendered
 
@@ -20,6 +25,10 @@ class DotRenderer (
 //    }
 
     fun renderDots(context: WorldRenderContext) {
+        if (!config.playerSettings.showBridgePaths) {
+            return
+        }
+
         val matrices = context.matrixStack() ?: throw IllegalStateException("MatrixStack is null")
         val camera = context.camera()
         val vertexConsumers = context.consumers() ?: return
