@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "1.5.31"
     id("fabric-loom") version "1.9-SNAPSHOT"
     id("maven-publish")
 }
@@ -20,7 +21,7 @@ java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
     // if it is present.
     // If you remove this line, sources will not be generated.
-    withSourcesJar()
+//    withSourcesJar()
 }
 
 loom {
@@ -57,7 +58,7 @@ dependencies {
 
     // Non-minecraft deps
 //    implementation(project.dependencies.platform("io.insert-koin:koin-bom))
-    implementation("io.insert-koin:koin-core:${project.property("koin_version")}")
+    include(implementation("io.insert-koin", "koin-core", project.property("koin_version").toString()))
     testImplementation("io.insert-koin:koin-test:${project.property("koin_version")}")
     testImplementation("io.mockk:mockk:${project.property("mockk_version")}")
 

@@ -2,10 +2,14 @@
   "schemaVersion": 1,
   "id": "bridges-judge",
   "version": "${version}",
-  "name": "BRIDGES Judgificator",
+  "name": "BRIDGES Judge Mod",
   "description": "",
-  "authors": [],
-  "contact": {},
+  "authors": [
+    "PixelKnights"
+  ],
+  "contact": {
+    "homepage": "https://github.com/PixelKnights5/BRIDGES-Judge"
+  },
   "license": "LGPL-3.0",
   "icon": "assets/bridges-judge/icon.png",
   "environment": "client",
