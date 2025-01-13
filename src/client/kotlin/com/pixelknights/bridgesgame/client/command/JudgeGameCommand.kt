@@ -3,9 +3,7 @@ package com.pixelknights.bridgesgame.client.command
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
-import com.mojang.brigadier.suggestion.SuggestionProvider
-import com.mojang.brigadier.suggestion.Suggestions
-import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.GameBoard
 import com.pixelknights.bridgesgame.client.game.entity.GameColor
 import com.pixelknights.bridgesgame.client.render.DotRenderer
@@ -14,10 +12,8 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Vec3d
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.util.concurrent.CompletableFuture
 
 
 class JudgeGameCommand (
@@ -27,26 +23,41 @@ class JudgeGameCommand (
 ) : Command<FabricClientCommandSource>, KoinComponent {
 
     private val mc: MinecraftClient by inject()
+    private val config: ModConfig by inject()
 
     override fun run(ctx: CommandContext<FabricClientCommandSource>): Int {
         val action = StringArgumentType.getString(ctx, "action")
 
         return when (action) {
             "scan" -> handleScanAction(ctx)
-            else -> -999
+            "setCenterTower" -> handleSetCenterTowerAction(ctx)
+            else -> commandNotImplemented(ctx)
         }
     }
 
     private fun handleScanAction(ctx: CommandContext<FabricClientCommandSource>): Int {
-        val playerPosition = Vec3d(279.0, -35.0, 159.0)
+        val centerPosition = config.playerSettings.centerCoordinate
 
         dotRenderer.dotsToRender.clear()
         lineRenderer.linesToRender.clear()
 
-        playerPosition.let {
-            gameBoard.scanGame(BlockPos.ofFloored(playerPosition))
-            ctx.source.sendFeedback(getScoreText())
+        gameBoard.scanGame(centerPosition)
+        ctx.source.sendFeedback(getScoreText())
+
+        return 0
+    }
+
+    private fun handleSetCenterTowerAction(ctx: CommandContext<FabricClientCommandSource>): Int {
+        val playerPosition = mc.player?.pos
+
+        if (playerPosition == null) {
+            ctx.source.sendError(Text.of("Player position is null"))
+            return -1
         }
+
+        config.playerSettings.centerCoordinate = BlockPos.ofFloored(playerPosition)
+        config.save()
+        ctx.source.sendFeedback(Text.of("Center tower coordinates set to: ${config.playerSettings.centerCoordinate}"))
 
         return 0
     }
@@ -77,20 +88,9 @@ class JudgeGameCommand (
         return Text.literal(results)
     }
 
-}
-
-object ActionCompletionProvider : SuggestionProvider<FabricClientCommandSource> {
-    override fun getSuggestions(
-        context: CommandContext<FabricClientCommandSource>,
-        builder: SuggestionsBuilder
-    ): CompletableFuture<Suggestions> {
-        arrayOf(
-            "set",
-            "clear",
-            "scan",
-        ).forEach { builder.suggest(it) }
-
-        return builder.buildFuture()
+    private fun commandNotImplemented(ctx: CommandContext<FabricClientCommandSource>): Int {
+        ctx.source.sendError(Text.of("Not yet implemented"))
+        return -999
     }
 
 }

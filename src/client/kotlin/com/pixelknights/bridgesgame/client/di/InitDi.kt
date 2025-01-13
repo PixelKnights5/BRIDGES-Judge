@@ -2,7 +2,6 @@ package com.pixelknights.bridgesgame.client.di
 
 import com.pixelknights.bridgesgame.client.MOD_ID
 import com.pixelknights.bridgesgame.client.command.CommandRegistry
-import com.pixelknights.bridgesgame.client.command.ConfigGameCommand
 import com.pixelknights.bridgesgame.client.command.JudgeGameCommand
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
@@ -40,7 +39,6 @@ val appModule = module {
     singleOf(::DotRenderer)
     singleOf(::LineRenderer)
     singleOf(::HoveringTextRenderer)
-    singleOf(::ConfigGameCommand)
 }
 
 fun initDi(): KoinApplication {

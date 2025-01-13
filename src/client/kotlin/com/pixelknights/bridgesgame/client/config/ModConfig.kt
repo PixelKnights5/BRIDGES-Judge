@@ -6,6 +6,7 @@ import com.pixelknights.bridgesgame.client.MOD_LOGGER
 import kotlinx.io.IOException
 import kotlinx.serialization.Transient
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.util.math.BlockPos
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,6 +17,7 @@ import kotlin.io.path.pathString
 data class ModConfig(
     val boardConfig: BoardConfig = BoardConfig(),
     val towerConfig: TowerConfig = TowerConfig(),
+    val playerSettings: PlayerSettings = PlayerSettings(),
     val configVersion: Int = 1,
 ) {
 
@@ -77,4 +79,8 @@ data class TowerConfig (
     val blocksBetweenFloors: Int = 4,
     val orangeTowerCornerBlock: String = "minecraft:waxed_chiseled_copper",
     val markerBlock: String = "minecraft:beacon"
+)
+
+data class PlayerSettings (
+    var centerCoordinate: BlockPos = BlockPos.ORIGIN,
 )
