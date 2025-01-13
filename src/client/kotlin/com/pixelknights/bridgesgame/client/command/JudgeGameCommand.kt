@@ -31,7 +31,9 @@ class JudgeGameCommand (
         return when (action) {
             "scan" -> handleScanAction(ctx)
             "setCenterTower" -> handleSetCenterTowerAction(ctx)
-            "clear" -> handleClearAction()
+            "clear" -> handleClearAction(ctx)
+            "showPathLines" -> handlePathLineVisibility(ctx, true)
+            "hidePathLines" -> handlePathLineVisibility(ctx, false)
             else -> commandNotImplemented(ctx)
         }
     }
@@ -48,8 +50,22 @@ class JudgeGameCommand (
         return 0
     }
 
-    fun handleClearAction(): Int {
+    fun handleClearAction(ctx: CommandContext<FabricClientCommandSource>): Int {
         gameBoard.resetGame()
+        ctx.source.sendFeedback(Text.of("Game state cleared"))
+        return 0
+    }
+
+    private fun handlePathLineVisibility(ctx: CommandContext<FabricClientCommandSource>, isVisible: Boolean): Int {
+        config.playerSettings.showBridgePaths = isVisible
+        config.save()
+
+        if (isVisible) {
+            ctx.source.sendFeedback(Text.of("Showing path lines"))
+        } else {
+            ctx.source.sendFeedback(Text.of("Hiding path lines"))
+        }
+
         return 0
     }
 

@@ -1,16 +1,24 @@
 package com.pixelknights.bridgesgame.client.render
 
+import com.pixelknights.bridgesgame.client.config.ModConfig
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.VertexConsumerProvider
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Vec3d
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class LineRenderer {
+class LineRenderer : KoinComponent {
     val linesToRender = mutableSetOf<DebugLine>()
 
+    val config: ModConfig by inject()
 
     fun renderLines(context: WorldRenderContext) {
+        if (!config.playerSettings.showBridgePaths) {
+            return
+        }
+
         val matrices = context.matrixStack() ?: throw IllegalStateException("MatrixStack is null")
         val camera = context.camera()
         val vertexConsumers = context.consumers() ?: return
