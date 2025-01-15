@@ -150,7 +150,7 @@ class GameBoard(
             }
 
             val topFloor = tower.floors.maxBy { it.floorNumber }
-            val textHeight = (topFloor.floorNumber + 1) * config.towerConfig.blocksBetweenFloors + 5
+            val textHeight = (topFloor.floorNumber + 1) * config.towerConfig.blocksBetweenFloors + 7
             val position = tower.worldCoordinates(centerCoordinate, config) + Vec3i(1, textHeight, 1)
 
             val textBlock = HoveringText(position)
@@ -164,7 +164,7 @@ class GameBoard(
 
             textBlock.addLine("§nFloors:", Color.WHITE)
             tower.floors
-                .groupBy { it.captureColor }.forEach { team, groupFloors ->
+                .groupBy { it.owner }.forEach { team, groupFloors ->
                     val floorNumbers = groupFloors.map { it.floorNumber + 1 }
                     if (team == null) {
                         textBlock.addLine("Uncaptured floors: $floorNumbers", Color.WHITE)
@@ -172,6 +172,11 @@ class GameBoard(
                         textBlock.addLine("Team $team captured: $floorNumbers", Color.fromHex(team.rgba))
                     }
                 }
+            val unvalidatedFloors = tower.floors.filter { it.owner != null && !it.isOwnerValidated }.toList()
+            if (!unvalidatedFloors.isEmpty()) {
+                textBlock.addLine("⚠ Disconnected Floors: ${unvalidatedFloors.map { it.floorNumber + 1 }.toList()} ⚠", Color.WHITE)
+            }
+
 
             textRenderer.textToRender.add(textBlock)
         }

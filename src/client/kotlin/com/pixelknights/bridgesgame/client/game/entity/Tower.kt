@@ -45,7 +45,7 @@ class Tower(
             return
         }
 
-        val areAllFloorsCaptured = floors.all { it.captureColor == firstColor }
+        val areAllFloorsCaptured = floors.all { it.owner == firstColor && it.isOwnerValidated }
         val topFloor = floors[numFloors - 1]
         val ceilingBlockOffset = config.towerConfig.blocksBetweenFloors / 2
         val ceilingBlock = topFloor.worldCenter.up(ceilingBlockOffset)
