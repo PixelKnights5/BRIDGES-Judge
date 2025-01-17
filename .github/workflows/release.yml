@@ -26,27 +26,16 @@ jobs:
         run: ./gradlew clean test
       - name: Build with Gradle Wrapper
         run: ./gradlew clean build
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-            tag_name: ${{ github.ref }}
-            release_name: Release ${{ github.ref }}
-            body: |
-                Changes in this Release
-                - Change 1
-                - Change 2
-                - Change 3
-            draft: true
-            prerelease: false
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/libs/bridges-judge-*.jar
-          asset_name: 'bridges-judge-${{ github.ref }}.jar'
-          asset_content_type: application/java-archive
+          prerelease: false
+          name: Release ${{ github.ref }}
+          draft: true
+          files: ./build/libs/*.jar
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Changes in this Release
+            - Change 1
+            - Change 2
+            - Change 3
