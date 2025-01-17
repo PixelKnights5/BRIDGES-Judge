@@ -1,0 +1,41 @@
+name: release
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write # To publish a GitHub release
+  issues: write # To comment on released issues
+  pull-requests: write # To comment on released PRs
+  id-token: write # To create a release
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4.2.2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Test with Gradle Wrapper
+        run: ./gradlew clean test
+      - name: Build with Gradle Wrapper
+        run: ./gradlew clean build
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: false
+          name: Release ${{ github.ref.tag }}
+          draft: true
+          files: ./build/libs/*.jar
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Changes in this Release
+            - Change 1
+            - Change 2
+            - Change 3
