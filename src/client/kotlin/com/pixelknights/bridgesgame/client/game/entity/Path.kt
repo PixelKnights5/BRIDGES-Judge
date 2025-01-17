@@ -148,7 +148,7 @@ class Path (
             if (it.endNode == null) {
                 return@map null
             }
-            return@map DebugLine(it.startNode.worldCoords, it.endNode.worldCoords, color)
+            return@map DebugLine(it.startNode.worldPosition, it.endNode.worldPosition, color)
         }.filterNotNull().toList()
 
         val ladderLines = floors
