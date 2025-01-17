@@ -17,7 +17,14 @@ import org.apache.logging.log4j.LogManager
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
+
+enum class Channels {
+    MultipleBridgeDetectedErrorChannel
+}
 
 val appModule = module {
     single {
@@ -39,6 +46,9 @@ val appModule = module {
     singleOf(::DotRenderer)
     singleOf(::LineRenderer)
     singleOf(::HoveringTextRenderer)
+    single<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel)) {
+        LinkedBlockingQueue()
+    }
 }
 
 fun initDi(): KoinApplication {

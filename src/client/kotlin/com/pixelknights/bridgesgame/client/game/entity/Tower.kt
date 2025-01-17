@@ -39,17 +39,26 @@ class Tower(
         }
     }
 
+    /**
+     * Get the team that placed the tower claim block, but don't confirm that the claim is valid.
+     * To check if the claim is valid, use [setCapturingTeam] then check the [capturingTeam] property.
+     */
+    fun getAttemptedClaimingTeam(world: ClientWorld, config: ModConfig): GameColor? {
+        val topFloor = floors[numFloors - 1]
+        val ceilingBlockOffset = config.towerConfig.blocksBetweenFloors / 2
+        val ceilingBlock = topFloor.worldCenter.up(ceilingBlockOffset)
+        return getTeamColorForBlock(world.getBlockState(ceilingBlock)?.block)
+    }
+
     fun setCapturingTeam(world: ClientWorld, config: ModConfig) {
         val firstColor = floors.firstOrNull()?.captureColor
         if (firstColor == null) {
             return
         }
 
-        val areAllFloorsCaptured = floors.all { it.captureColor == firstColor }
-        val topFloor = floors[numFloors - 1]
-        val ceilingBlockOffset = config.towerConfig.blocksBetweenFloors / 2
-        val ceilingBlock = topFloor.worldCenter.up(ceilingBlockOffset)
-        val doesCeilingBlockMatch = getTeamColorForBlock(world.getBlockState(ceilingBlock)?.block) == firstColor
+        val areAllFloorsCaptured = floors.all { it.owner == firstColor && it.isOwnerValidated }
+        val attemptedClaimingTeam = getAttemptedClaimingTeam(world, config)
+        val doesCeilingBlockMatch = attemptedClaimingTeam == firstColor
 
         capturingTeam = when {
             areAllFloorsCaptured && doesCeilingBlockMatch -> firstColor

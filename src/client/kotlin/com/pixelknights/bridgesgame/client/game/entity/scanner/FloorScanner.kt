@@ -37,7 +37,7 @@ class FloorScanner(
             hasLadder = hasLadder,
             tower = tower,
             worldCenter = worldCenterPosition,
-            captureColor = claimingTeam,
+            captureColor = paintingTeam ?: claimingTeam,
             paintColor = paintingTeam
         )
         floor.nodes = NodeSide.entries.map { side -> getNode(floor, side) }.toList()

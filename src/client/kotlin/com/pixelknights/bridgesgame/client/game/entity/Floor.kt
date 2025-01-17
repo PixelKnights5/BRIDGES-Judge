@@ -20,6 +20,18 @@ data class Floor (
     val owner: GameColor?
         get() = paintColor ?: captureColor
 
+    val isOwnerValidated: Boolean
+        get() {
+            if (owner == null) {
+                return false
+            }
+            return if (isPainted) {
+                isPaintValidated == true
+            } else {
+                isCaptureValidated == true
+            }
+        }
+
     var isCaptureValidated: Boolean? = null
     var isPaintValidated: Boolean? = null
     lateinit var nodes: List<Node>
