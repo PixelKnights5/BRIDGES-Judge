@@ -42,7 +42,7 @@ data class Floor (
     // TODO: The value '2' should be pulled from config. Thanks for fixing that, future me.
     val worldGround: BlockPos = worldCenter.down(2)
 
-    val coords: String = "$floorNumber${tower.coords}"
+    val coords: String = "${1 + floorNumber}${tower.coords}"
     val worldCoords: String = "(${worldGround.x}, ${worldGround.y}, ${worldGround.z})"
 
     override fun toString(): String {
