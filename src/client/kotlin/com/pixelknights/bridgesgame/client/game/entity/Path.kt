@@ -3,10 +3,11 @@ package com.pixelknights.bridgesgame.client.game.entity
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.render.Color
 import com.pixelknights.bridgesgame.client.render.DebugLine
+import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.block.LadderBlock
 import net.minecraft.util.math.Direction
 import net.minecraft.world.World
-import com.pixelknights.bridgesgame.client.util.plus
+import java.util.concurrent.BlockingQueue
 
 
 class Path (
@@ -44,7 +45,7 @@ class Path (
      * Build a bridge network and validate floors along the way.
      * The [startingFloor] must already be connected to the existing path
      */
-    fun buildPath(startingFloor: Floor, allTowers: List<Tower>) {
+    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errorChannel: BlockingQueue<String>) {
         if (startingFloor in floors) {
             return
         }
@@ -67,7 +68,7 @@ class Path (
                 .flatMap { it.floors }
                 .first { it.floorNumber == startingFloor.floorNumber + 1 }
 
-            buildPath(aboveFloor, allTowers)
+            buildPath(aboveFloor, allTowers, errorChannel)
         }
 
         // Take ladders going down
@@ -78,7 +79,7 @@ class Path (
             .firstOrNull { it.floorNumber == startingFloor.floorNumber - 1 }
 
         if (belowFloor?.hasLadder == true) {
-            buildPath(belowFloor, allTowers)
+            buildPath(belowFloor, allTowers, errorChannel)
         }
 
         // Take all usable bridges
@@ -87,19 +88,26 @@ class Path (
 
             if (node.connectedBridges.size > 1) {
                 // Choose the path that is most beneficial to the team and invalidate the others
-                val allOptions = node.connectedBridges.associate { bridge ->
+                val allOptions = node.connectedBridges
+                    .filter { it.errors.isEmpty() }
+                    .associate { bridge ->
                     val pathOption = Path(this.pathOwner).also { copy ->
                         copy.bridges += (this.bridges + bridge)
                         copy.floors += (this.floors + startingFloor)
                     }
                     if (bridge.endNode != null) {
-                        pathOption.buildPath(bridge.endNode.floor, allTowers)
-                        pathOption.buildPath(bridge.startNode.floor, allTowers)
+                        pathOption.buildPath(bridge.endNode.floor, allTowers, errorChannel)
+                        pathOption.buildPath(bridge.startNode.floor, allTowers, errorChannel)
                         return@associate bridge to pathOption
                     } else {
                         return@associate bridge to null
                     }
                 }
+                if (allOptions.size > 1) {
+                    val coords = node.worldCoords
+                    errorChannel += "Node at (${coords.x}, ${coords.y}, ${coords.z}) has multiple bridges."
+                }
+
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
                 nextBridge = bestOption.key
                 
@@ -116,8 +124,8 @@ class Path (
                 bridges += nextBridge
 
                 // One of these will be the same as startingFloor and return immediately.
-                buildPath(nextBridge.startNode.floor, allTowers)
-                buildPath(nextBridge.endNode?.floor ?: continue, allTowers)
+                buildPath(nextBridge.startNode.floor, allTowers, errorChannel)
+                buildPath(nextBridge.endNode?.floor ?: continue, allTowers, errorChannel)
             }
 
 //            val nextFloor = if (nextBridge.startNode == node) {

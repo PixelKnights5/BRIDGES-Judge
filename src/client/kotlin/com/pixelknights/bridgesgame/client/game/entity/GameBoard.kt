@@ -1,16 +1,21 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
+import com.pixelknights.bridgesgame.client.di.Channels
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
-import net.minecraft.client.MinecraftClient
-import net.minecraft.util.math.BlockPos
-import org.koin.core.component.KoinComponent
 import com.pixelknights.bridgesgame.client.util.plus
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.world.ClientWorld
+import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3i
 import org.apache.logging.log4j.Logger
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.qualifier.named
+import java.util.concurrent.BlockingQueue
+import kotlin.getValue
 
 class GameBoard(
     private val towerScanner: TowerScanner,
@@ -26,7 +31,10 @@ class GameBoard(
     private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
+    private val errorChannel: BlockingQueue<String> by inject<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel))
+
     val teams: MutableMap<GameColor, Team> = mutableMapOf()
+
 
     fun scanGame(centerCoordinate: BlockPos) {
         resetGame()
@@ -130,6 +138,18 @@ class GameBoard(
             }
         }
 
+        // Calculate moves
+        teams.forEach { (teamColor, team) ->
+            val numBridgeClaims = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.owner == teamColor }
+            val numBridgePaints = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
+            val floorClaims = towers.flatten().flatMap { it.floors }.count { it.captureColor == teamColor }
+            val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
+            val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }
+            // Scrapes should be added here, but the mod has no "memory" of previous days so this is not possible to count.
+
+            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + towerClaims
+        }
+
         logger.info("Teams = $teams")
     }
 
@@ -201,7 +221,7 @@ class GameBoard(
                 .first { floor -> floor.floorNumber == 0 }
 
 
-            path.buildPath(baseFloor, allTowers.toList())
+            path.buildPath(baseFloor, allTowers.toList(), errorChannel)
         }
     }
 
