@@ -151,6 +151,23 @@ class GameBoard(
         }
 
         logger.info("Teams = $teams")
+
+        // report floor errors
+        towers
+            .asSequence()
+            .flatten()
+            .flatMap { it.floors }
+            .filter { (it.isCaptured && it.isCaptureValidated != true) || (it.isPainted && it.isPaintValidated != true) }
+            .forEach {
+                if(it.isCaptured && it.isCaptureValidated != true) {
+                    errorChannel += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.captureColor} network"
+                }
+                if(it.isPainted && it.isPaintValidated != true) {
+                    errorChannel += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network"
+                }
+            }
+
+        //TODO: report bridge errors
     }
 
     /**

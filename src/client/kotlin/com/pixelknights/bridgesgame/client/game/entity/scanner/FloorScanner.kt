@@ -52,7 +52,7 @@ class FloorScanner(
             side = side,
             isOpen = isOpen ?: false,
             floor = floor,
-            worldCoords = worldCoords,
+            worldPosition = worldCoords,
         )
     }
 
