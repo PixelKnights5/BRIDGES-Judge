@@ -30,17 +30,24 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
       # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
       # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4.2.2
 
-      - name: Build with Gradle Wrapper
-        run: ./gradlew build
-
       - name: Test with Gradle Wrapper
         run: ./gradlew test
 
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java-kotlin"
 
   dependency-submission:
 
