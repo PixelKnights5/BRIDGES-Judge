@@ -17,6 +17,8 @@ class Tower(
     var floors: List<Floor> = mutableListOf()
     var capturingTeam: GameColor? = null
 
+    var coords: String = "${'A' + column}${1 + row}"
+
     fun worldCoordinates(centerTowerPos: BlockPos, config: ModConfig): BlockPos {
         val centerTowerRow = config.boardConfig.width / 2
         val centerTowerCol = config.boardConfig.height / 2
@@ -29,7 +31,7 @@ class Tower(
     }
 
     /**
-     * Calculate the points that a a tower is worth for a given team. Does not validate if the tower is captured.
+     * Calculate the points that a tower is worth for a given team. Does not validate if the tower is captured.
      */
     fun getCapturePoints(team: GameColor): Int {
         return when (color) {
@@ -78,6 +80,8 @@ class Tower(
 
     override fun hashCode() = Objects.hashCode(row, column)
 
-
+    override fun toString(): String {
+        return "Tower(coords=$coords)"
+    }
 
 }

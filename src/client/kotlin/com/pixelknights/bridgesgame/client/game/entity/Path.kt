@@ -104,8 +104,7 @@ class Path (
                     }
                 }
                 if (allOptions.size > 1) {
-                    val coords = node.worldCoords
-                    errorChannel += "Node at (${coords.x}, ${coords.y}, ${coords.z}) has multiple bridges."
+                    errorChannel += "Node ${node.coords} ${node.worldCoords} has multiple bridges"
                 }
 
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
@@ -149,7 +148,7 @@ class Path (
             if (it.endNode == null) {
                 return@map null
             }
-            return@map DebugLine(it.startNode.worldCoords, it.endNode.worldCoords, color)
+            return@map DebugLine(it.startNode.worldPosition, it.endNode.worldPosition, color)
         }.filterNotNull().toList()
 
         val ladderLines = floors

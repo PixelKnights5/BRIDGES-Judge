@@ -24,7 +24,7 @@ class BridgeScanner (
             }
 
             val errors = mutableListOf<BridgeError>()
-            val owner = template.findBridgeOwner(mc, node.worldCoords.down(2))
+            val owner = template.findBridgeOwner(mc, node.worldPosition.down(2))
 
             // If there is no bridge, don't continue.
             @Suppress("FoldInitializerAndIfToElvis")
@@ -32,8 +32,8 @@ class BridgeScanner (
                 return@map null
             }
 
-            val painter = template.findBridgePainter(mc, node.worldCoords.down(1))
-            val endNode = allNodes.filter { it.worldCoords == (node.worldCoords + template.targetNodeOffset) }
+            val painter = template.findBridgePainter(mc, node.worldPosition.down(1))
+            val endNode = allNodes.filter { it.worldPosition == (node.worldPosition + template.targetNodeOffset) }
 
             if (endNode.isEmpty()) {
                 errors += BridgeError.BRIDGE_TO_CLOSED_NODE
@@ -52,7 +52,7 @@ class BridgeScanner (
 
 
     companion object {
-        private val CORNER_NODES = arrayOf(NodeSide.NORTHEAST, NodeSide.SOUTHEAST, NodeSide.NORTHWEST, NodeSide.SOUTHWEST)
+        private val CORNER_NODES = arrayOf(NodeSide.NE, NodeSide.SE, NodeSide.NW, NodeSide.SW)
     }
 }
 
