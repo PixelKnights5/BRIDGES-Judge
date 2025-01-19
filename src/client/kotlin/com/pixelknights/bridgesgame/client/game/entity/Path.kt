@@ -16,8 +16,8 @@ class Path (
     val bridges: MutableSet<Bridge> = mutableSetOf()
     val floors: MutableSet<Floor> = mutableSetOf()
 
-    fun containsBaseTower(): Boolean {
-        return floors.any { it.tower.isBase }
+    fun containsBaseFloor(startingFloor: Floor): Boolean {
+        return startingFloor.tower.color == pathOwner && startingFloor.isBase  || floors.any { it.tower.color == pathOwner && it.isBase }
     }
 
 
@@ -49,13 +49,13 @@ class Path (
         if (startingFloor in floors) {
             return
         }
-        val containsBaseTower = containsBaseTower()
+        val containsBaseFloor = containsBaseFloor(startingFloor)
 
-        if (startingFloor.owner == pathOwner) {
-            startingFloor.isCaptureValidated = containsBaseTower
+        if (startingFloor.captureColor == pathOwner) {
+            startingFloor.isCaptureValidated = containsBaseFloor
         }
         if (startingFloor.paintColor == pathOwner) {
-            startingFloor.isPaintValidated = containsBaseTower
+            startingFloor.isPaintValidated = containsBaseFloor
         }
 
         floors += startingFloor

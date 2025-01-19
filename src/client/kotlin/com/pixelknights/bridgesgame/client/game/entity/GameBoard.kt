@@ -229,14 +229,14 @@ class GameBoard(
             .map { team -> Path(team) }
             .toList()
 
+        val allTowers = towers.asSequence().flatten()
+
         paths.forEach { path ->
-            val allTowers = towers.asSequence().flatten()
 
             val baseFloor = allTowers
                 .filter { tower -> tower.color == path.pathOwner && tower.isBase }
                 .flatMap { tower -> tower.floors }
-                .first { floor -> floor.floorNumber == 0 }
-
+                .first { floor -> floor.isBase }
 
             path.buildPath(baseFloor, allTowers.toList(), errorChannel)
         }
