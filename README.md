@@ -1,5 +1,5 @@
 # BRIDGES Judge
-*For Minecraft 1.21.1 and Fabric 0.110.0*
+*For Minecraft 1.21.8 and Fabric 0.131.0*
 
 This is a small utility mod to help judge a BRIDGES game.
 
