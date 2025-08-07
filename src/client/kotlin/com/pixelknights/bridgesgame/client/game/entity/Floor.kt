@@ -12,6 +12,7 @@ data class Floor (
     val worldCenter: BlockPos,
     val captureColor: GameColor? = null,
     val paintColor: GameColor? = null,
+    val isBase: Boolean,
 ) {
 
     val isCaptured: Boolean
