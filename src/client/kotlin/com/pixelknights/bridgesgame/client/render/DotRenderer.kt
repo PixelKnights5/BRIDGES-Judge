@@ -72,7 +72,7 @@ class DotRenderer : KoinComponent {
         color: Color
     ) {
         val size = 0.1f  // Size of the dot in blocks
-        val consumer = vertexConsumers.getBuffer(RenderLayer.getTranslucent())
+        val consumer = vertexConsumers.getBuffer(RenderLayer.getTranslucentMovingBlock())
         val matrix = matrices.peek().positionMatrix
         val light = LightmapTextureManager.MAX_LIGHT_COORDINATE
 
