@@ -51,15 +51,19 @@ class JudgeGameCommand (
         lineRenderer.linesToRender.clear()
 
         gameBoard.scanGame(centerPosition)
-        ctx.source.sendFeedback(getScoreText())
 
+        var numErrors = 0
         errorChannel.forEach {
-            val message = "WARNING: $it"
-            ctx.source.sendError(Text.of(message))
+            numErrors++
+            ctx.source.sendError(Text.of("WARNING: $it"))
         }
         errorChannel.clear()
 
+        ctx.source.sendFeedback(getScoreText())
 
+        if(numErrors > 0) {
+            ctx.source.sendError(Text.of("$numErrors warnings detected (see above scores)"))
+        }
 
         return 0
     }

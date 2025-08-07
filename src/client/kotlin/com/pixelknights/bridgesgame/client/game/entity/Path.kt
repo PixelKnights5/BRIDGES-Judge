@@ -16,8 +16,8 @@ class Path (
     val bridges: MutableSet<Bridge> = mutableSetOf()
     val floors: MutableSet<Floor> = mutableSetOf()
 
-    fun containsBaseTower(): Boolean {
-        return floors.any { it.tower.isBase }
+    fun containsBaseFloor(startingFloor: Floor): Boolean {
+        return startingFloor.tower.color == pathOwner && startingFloor.isBase  || floors.any { it.tower.color == pathOwner && it.isBase }
     }
 
 
@@ -49,13 +49,13 @@ class Path (
         if (startingFloor in floors) {
             return
         }
-        val containsBaseTower = containsBaseTower()
+        val containsBaseFloor = containsBaseFloor(startingFloor)
 
-        if (startingFloor.owner == pathOwner) {
-            startingFloor.isCaptureValidated = containsBaseTower
+        if (startingFloor.captureColor == pathOwner) {
+            startingFloor.isCaptureValidated = containsBaseFloor
         }
         if (startingFloor.paintColor == pathOwner) {
-            startingFloor.isPaintValidated = containsBaseTower
+            startingFloor.isPaintValidated = containsBaseFloor
         }
 
         floors += startingFloor
@@ -104,8 +104,7 @@ class Path (
                     }
                 }
                 if (allOptions.size > 1) {
-                    val coords = node.worldCoords
-                    errorChannel += "Node at (${coords.x}, ${coords.y}, ${coords.z}) has multiple bridges."
+                    errorChannel += "Node ${node.coords} ${node.worldCoords} has multiple bridges"
                 }
 
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
@@ -149,7 +148,7 @@ class Path (
             if (it.endNode == null) {
                 return@map null
             }
-            return@map DebugLine(it.startNode.worldCoords, it.endNode.worldCoords, color)
+            return@map DebugLine(it.startNode.worldPosition, it.endNode.worldPosition, color)
         }.filterNotNull().toList()
 
         val ladderLines = floors

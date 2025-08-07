@@ -12,7 +12,11 @@ data class Floor (
     val worldCenter: BlockPos,
     val captureColor: GameColor? = null,
     val paintColor: GameColor? = null,
+    val isBase: Boolean,
 ) {
+
+    val isCaptured: Boolean
+        get() = captureColor != null
 
     val isPainted: Boolean
         get() = paintColor != null
@@ -39,5 +43,11 @@ data class Floor (
     // TODO: The value '2' should be pulled from config. Thanks for fixing that, future me.
     val worldGround: BlockPos = worldCenter.down(2)
 
+    val coords: String = "${1 + floorNumber}${tower.coords}"
+    val worldCoords: String = "(${worldGround.x}, ${worldGround.y}, ${worldGround.z})"
+
+    override fun toString(): String {
+        return "Floor(coords=$coords, tower=$tower, worldCoords=$worldCoords)"
+    }
 
 }
