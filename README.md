@@ -3,6 +3,8 @@
 
 This is a small utility mod to help judge a BRIDGES game.
 
+Download on Modrinth - https://modrinth.com/mod/bridges-judge
+
 ## Dependencies
 - Minecraft 1.21.1
 - Fabric 0.110.0
