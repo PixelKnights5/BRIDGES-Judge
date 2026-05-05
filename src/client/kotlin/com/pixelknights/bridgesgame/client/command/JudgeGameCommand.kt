@@ -12,7 +12,6 @@ import com.pixelknights.bridgesgame.client.render.LineRenderer
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
-import net.minecraft.util.math.BlockPos
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
@@ -102,14 +101,14 @@ class JudgeGameCommand (
     }
 
     private fun handleSetCenterTowerAction(ctx: CommandContext<FabricClientCommandSource>): Int {
-        val playerPosition = mc.player?.pos
+        val playerPosition = mc.player?.blockPos
 
         if (playerPosition == null) {
             ctx.source.sendError(Text.of("Player position is null"))
             return -1
         }
 
-        config.playerSettings.centerCoordinate = BlockPos.ofFloored(playerPosition)
+        config.playerSettings.centerCoordinate = playerPosition
         config.save()
         val coordinate = config.playerSettings.centerCoordinate
         ctx.source.sendFeedback(Text.of("Center tower coordinates set to: (${coordinate.x}, ${coordinate.y}, ${coordinate.z})"))

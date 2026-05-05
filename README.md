@@ -1,13 +1,13 @@
 # BRIDGES Judge
-*For Minecraft 1.21.8 and Fabric 0.131.0*
+*For Minecraft 1.21.11 and Fabric 0.141.3*
 
 This is a small utility mod to help judge a BRIDGES game.
 
 Download on Modrinth - https://modrinth.com/mod/bridges-judge
 
 ## Dependencies
-- Minecraft 1.21.1
-- Fabric 0.110.0
+- Minecraft 1.21.11
+- Fabric 0.141.3
 - [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) 
 
 ## Installation

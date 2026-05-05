@@ -1,8 +1,8 @@
 package com.pixelknights.bridgesgame.client.render
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
-import net.minecraft.client.render.RenderLayer
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
+import net.minecraft.client.render.RenderLayers
 import net.minecraft.client.render.VertexConsumerProvider
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Vec3d
@@ -19,12 +19,11 @@ class LineRenderer : KoinComponent {
             return
         }
 
-        val matrices = context.matrixStack() ?: throw IllegalStateException("MatrixStack is null")
-        val camera = context.camera()
+        val matrices = context.matrices()
+        val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers() ?: return
 
         matrices.push()
-        val cameraPos = camera.pos
 
         linesToRender.forEach { line ->
             drawLine(
@@ -46,7 +45,7 @@ class LineRenderer : KoinComponent {
         line: DebugLine,
         cameraPos: Vec3d
     ) {
-        val consumer = vertexConsumers.getBuffer(RenderLayer.LINES)
+        val consumer = vertexConsumers.getBuffer(RenderLayers.lines())
         val matrix = matrices.peek().positionMatrix
 
         val noiseVector = line.noiseVector
@@ -59,6 +58,7 @@ class LineRenderer : KoinComponent {
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
             .normal(1f, 1f, 1f)
+            .lineWidth(5f)
 
         consumer.vertex(
             matrix,
@@ -68,6 +68,7 @@ class LineRenderer : KoinComponent {
         )
             .color(line.color.red, line.color.green, line.color.blue, line.color.alpha)
             .normal(1f, 1f, 1f)
+            .lineWidth(5f)
     }
 }
 

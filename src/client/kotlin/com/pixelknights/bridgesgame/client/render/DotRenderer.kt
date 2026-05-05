@@ -1,7 +1,7 @@
 package com.pixelknights.bridgesgame.client.render
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
 import net.minecraft.client.render.*
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Vec3d
@@ -29,15 +29,12 @@ class DotRenderer : KoinComponent {
             return
         }
 
-        val matrices = context.matrixStack() ?: throw IllegalStateException("MatrixStack is null")
-        val camera = context.camera()
+        val matrices = context.matrices()
+        val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers() ?: return
 
         // Save the current matrix state
         matrices.push()
-
-        // Get camera position for proper rendering position
-        val cameraPos = camera.pos
 
         for (dot in dotsToRender) {
             // Translate to the block position
@@ -72,7 +69,7 @@ class DotRenderer : KoinComponent {
         color: Color
     ) {
         val size = 0.1f  // Size of the dot in blocks
-        val consumer = vertexConsumers.getBuffer(RenderLayer.getTranslucentMovingBlock())
+        val consumer = vertexConsumers.getBuffer(RenderLayers.translucentMovingBlock())
         val matrix = matrices.peek().positionMatrix
         val light = LightmapTextureManager.MAX_LIGHT_COORDINATE
 

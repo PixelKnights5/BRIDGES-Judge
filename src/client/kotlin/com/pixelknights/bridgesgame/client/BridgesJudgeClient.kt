@@ -6,7 +6,7 @@ import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
 import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -30,7 +30,7 @@ fun renderDebugObjects(dotRenderer: DotRenderer, lineRenderer: LineRenderer, tex
 
     }
 
-    WorldRenderEvents.LAST.register { context ->
+    WorldRenderEvents.END_MAIN.register { context ->
         textRenderer.renderAllText(context)
     }
 
