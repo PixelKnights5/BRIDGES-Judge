@@ -1,6 +1,5 @@
 package com.pixelknights.bridgesgame.client.render
 
-import com.pixelknights.bridgesgame.client.MOD_ID
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
 import net.minecraft.client.MinecraftClient
@@ -8,7 +7,8 @@ import net.minecraft.client.render.OverlayTexture
 import net.minecraft.client.render.RenderLayers
 import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.WorldRenderer
-import net.minecraft.util.Identifier
+import net.minecraft.util.math.Direction
+import net.minecraft.util.math.random.Random
 import org.joml.Matrix4f
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -28,34 +28,54 @@ class DotRenderer : KoinComponent {
         val vertexConsumers = context.consumers() ?: return
         val world = MinecraftClient.getInstance().world ?: return
 
-        val consumer = vertexConsumers.getBuffer(RenderLayers.entitySolid(DOT_TEXTURE))
+        val model = BridgesModels.bakedDot() ?: return
+        val parts = model.getParts(RANDOM)
+        val consumer = vertexConsumers.getBuffer(RenderLayers.solid())
+        val brightnesses = floatArrayOf(1f, 1f, 1f, 1f)
+
         for (dot in dotsToRender) {
             matrices.push()
             matrices.translate(
-                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
-                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
-                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
+                dot.position.x - cameraPos.x + dot.noise.x,
+                dot.position.y - cameraPos.y + dot.noise.y,
+                dot.position.z - cameraPos.z + dot.noise.z,
             )
 
             val light = WorldRenderer.getLightmapCoordinates(world, dot.position)
-            drawCube(consumer, matrices.peek().positionMatrix, dot.color, light)
+            val lights = intArrayOf(light, light, light, light)
+            val r = dot.color.red
+            val g = dot.color.green
+            val b = dot.color.blue
+            val a = dot.color.alpha
+            val entry = matrices.peek()
+
+            for (part in parts) {
+                for (direction in Direction.entries) {
+                    for (quad in part.getQuads(direction)) {
+                        consumer.quad(entry, quad, brightnesses, r, g, b, a, lights, OverlayTexture.DEFAULT_UV)
+                    }
+                }
+                for (quad in part.getQuads(null)) {
+                    consumer.quad(entry, quad, brightnesses, r, g, b, a, lights, OverlayTexture.DEFAULT_UV)
+                }
+            }
 
             matrices.pop()
         }
-
-        val outlineConsumer = vertexConsumers.getBuffer(RenderLayers.lines())
-        for (dot in dotsToRender) {
-            matrices.push()
-            matrices.translate(
-                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
-                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
-                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
-            )
-
-            drawOutline(outlineConsumer, matrices.peek().positionMatrix)
-
-            matrices.pop()
-        }
+//
+//        val outlineConsumer = vertexConsumers.getBuffer(RenderLayers.lines())
+//        for (dot in dotsToRender) {
+//            matrices.push()
+//            matrices.translate(
+//                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
+//                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
+//                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
+//            )
+//
+//            drawOutline(outlineConsumer, matrices.peek().positionMatrix)
+//
+//            matrices.pop()
+//        }
     }
 
     private fun drawCube(
@@ -141,6 +161,6 @@ class DotRenderer : KoinComponent {
     private companion object {
         const val DOT_SIZE = 0.1f
         const val OUTLINE_WIDTH = 5f
-        val DOT_TEXTURE: Identifier = Identifier.of(MOD_ID, "textures/misc/dot.png")
+        val RANDOM: Random = Random.create(0L)
     }
 }

@@ -2,6 +2,7 @@ package com.pixelknights.bridgesgame.client
 
 import com.pixelknights.bridgesgame.client.command.CommandRegistry
 import com.pixelknights.bridgesgame.client.di.initDi
+import com.pixelknights.bridgesgame.client.render.BridgesModels
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
@@ -15,6 +16,7 @@ class BridgesJudgeClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         MOD_LOGGER.info("Initializing BridgesJudge Mod")
+        BridgesModels.register()
         val koin = initDi()
 
         koin.koin.get<CommandRegistry>().registerCommands()
