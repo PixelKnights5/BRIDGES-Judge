@@ -14,7 +14,7 @@ class DebugLine (
 
     val noiseVector: Vec3d
         get() {
-            val doubleNoise = noise.toDouble()
+            val doubleNoise = noise.toDouble()/2
             return if (start.x == end.x && start.y == end.y) {
                 Vec3d(0.0, doubleNoise, 0.0)
             } else {
