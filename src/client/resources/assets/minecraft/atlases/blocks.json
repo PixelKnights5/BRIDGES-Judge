@@ -1,8 +1,9 @@
 {
   "sources": [
     {
-      "type": "minecraft:single",
-      "resource": "bridges-judge:misc/dot"
+      "type": "minecraft:directory",
+      "source": "misc",
+      "prefix": "misc/"
     }
   ]
 }
