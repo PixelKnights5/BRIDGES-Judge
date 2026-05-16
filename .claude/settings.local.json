@@ -11,7 +11,8 @@
       "WebFetch(domain:fabricmc.net)",
       "WebFetch(domain:wiki.fabricmc.net)",
       "Bash(./gradlew compileClientKotlin)",
-      "Bash(grep -E \"\\\\.kt$\")"
+      "Bash(grep -E \"\\\\.kt$\")",
+      "Bash(./gradlew test *)"
     ]
   }
 }

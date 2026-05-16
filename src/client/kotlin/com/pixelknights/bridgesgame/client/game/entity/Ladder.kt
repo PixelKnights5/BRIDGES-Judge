@@ -3,22 +3,21 @@ package com.pixelknights.bridgesgame.client.game.entity
 import net.minecraft.util.math.BlockPos
 import java.util.Objects
 
-data class Bridge(
-    override val blocks: List<BlockPos>,
+data class Ladder(
     override val nodeA: Node,
     override val nodeB: Node?,
-    override val owner: GameColor?,
-    override val painter: GameColor?,
-    override val errors: List<ConnectionError> = mutableListOf()
+    override val blocks: List<BlockPos>,
 ) : Connection {
 
-    override fun canTeamUse(team: GameColor): Boolean {
-        return nodeB != null && (owner == team || painter == team)
-    }
+    override val owner: GameColor? = null
+    override val painter: GameColor? = null
+    override val errors: List<ConnectionError> = emptyList()
+
+    override fun canTeamUse(team: GameColor): Boolean = nodeB != null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Bridge) return false
+        if (other !is Ladder) return false
 
         return ((nodeA == other.nodeA && nodeB == other.nodeB) ||
                 (nodeA == other.nodeB && nodeB == other.nodeA))
@@ -27,7 +26,6 @@ data class Bridge(
     override fun hashCode() = Objects.hash(nodeA, nodeB) + Objects.hash(nodeB, nodeA)
 
     override fun toString(): String {
-        return "Bridge(blocks=$blocks, nodeA=$nodeA, nodeB=$nodeB, owner=$owner, painter=$painter)"
+        return "Ladder(nodeA=$nodeA, nodeB=$nodeB)"
     }
-
 }

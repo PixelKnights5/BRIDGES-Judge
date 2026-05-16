@@ -1,7 +1,7 @@
 package com.pixelknights.bridgesgame.client.game.entity.scanner
 
 import com.pixelknights.bridgesgame.client.game.entity.Bridge
-import com.pixelknights.bridgesgame.client.game.entity.BridgeError
+import com.pixelknights.bridgesgame.client.game.entity.ConnectionError
 import com.pixelknights.bridgesgame.client.game.entity.Node
 import com.pixelknights.bridgesgame.client.game.entity.NodeSide
 import com.pixelknights.bridgesgame.client.game.rules.BridgeTemplate
@@ -14,6 +14,8 @@ class BridgeScanner (
 ) {
 
     fun getBridgesForNode(node: Node, allNodes: List<Node>): Set<Bridge> {
+        if (node.side == NodeSide.CENTER) return emptySet()
+
         return BridgeTemplate.ALL_BRIDGE_COMBINATIONS.flatten().map { template ->
 
             // Don't check against the wrong set of templates.
@@ -23,7 +25,7 @@ class BridgeScanner (
                 return@map null
             }
 
-            val errors = mutableListOf<BridgeError>()
+            val errors = mutableListOf<ConnectionError>()
             val owner = template.findBridgeOwner(mc, node.worldPosition.down(2))
 
             // If there is no bridge, don't continue.
@@ -36,13 +38,13 @@ class BridgeScanner (
             val endNode = allNodes.filter { it.worldPosition == (node.worldPosition + template.targetNodeOffset) }
 
             if (endNode.isEmpty()) {
-                errors += BridgeError.BRIDGE_TO_CLOSED_NODE
+                errors += ConnectionError.BRIDGE_TO_CLOSED_NODE
             }
 
             return@map Bridge(
                 blocks = template.blockCoords.map(::BlockPos),
-                startNode = node,
-                endNode = endNode.firstOrNull(),
+                nodeA = node,
+                nodeB = endNode.firstOrNull(),
                 owner = owner,
                 painter = painter,
                 errors = errors,

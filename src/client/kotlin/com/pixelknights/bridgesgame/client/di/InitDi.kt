@@ -8,6 +8,7 @@ import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import com.pixelknights.bridgesgame.client.game.entity.GameBoard
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.FloorScanner
+import com.pixelknights.bridgesgame.client.game.entity.scanner.LadderScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
@@ -42,6 +43,7 @@ val appModule = module {
     singleOf(::TowerScanner)
     singleOf(::FloorScanner)
     singleOf(::BridgeScanner)
+    singleOf(::LadderScanner)
     singleOf(::GameBoard)
     singleOf(::DotRenderer)
     singleOf(::LineRenderer)

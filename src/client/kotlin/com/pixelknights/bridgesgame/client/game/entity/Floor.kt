@@ -4,7 +4,6 @@ import net.minecraft.util.math.BlockPos
 
 data class Floor (
     val floorNumber: Int,
-    val hasLadder: Boolean,
     val tower: Tower,
     /**
      * The location at node/ladder level, not ground level

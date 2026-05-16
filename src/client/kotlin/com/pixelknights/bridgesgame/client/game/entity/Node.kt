@@ -6,6 +6,8 @@ import net.minecraft.util.math.Vec3i
 import com.pixelknights.bridgesgame.client.util.plus
 
 enum class NodeSide(val vector: Vec3i) {
+    // CENTER.vector is zero so worldCenter + (CENTER.vector * DISTANCE_FROM_CENTER) == worldCenter
+    CENTER(Vec3i.ZERO),
     N(Direction.NORTH.vector),
     E(Direction.EAST.vector),
     S(Direction.SOUTH.vector),
@@ -22,7 +24,7 @@ data class Node(
     val floor: Floor,
     val worldPosition: BlockPos,
 ) {
-    val connectedBridges: MutableSet<Bridge> = mutableSetOf()
+    val connections: MutableSet<Connection> = mutableSetOf()
 
     val coords = "${floor.coords}${side.name}"
     val worldCoords = "(${worldPosition.x}, ${worldPosition.y}, ${worldPosition.z})"

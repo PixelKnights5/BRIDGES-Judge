@@ -5,7 +5,6 @@ import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
 import com.pixelknights.bridgesgame.client.util.plus
 import com.pixelknights.bridgesgame.client.util.times
-import net.minecraft.block.Blocks
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.Logger
@@ -27,14 +26,11 @@ class FloorScanner(
 
         val worldCenterPosition = worldFloorPosition.up(blocksBetweenFloors / 2)
 
-        val hasLadder = (mc.world?.getBlockState(worldCenterPosition)?.block == Blocks.LADDER)
-
         val claimingTeam = getCapturingTeam(worldFloorPosition)
         val paintingTeam = getCapturingTeam(worldFloorPosition.up())
 
         val floor = Floor(
             floorNumber = floorNum,
-            hasLadder = hasLadder,
             tower = tower,
             worldCenter = worldCenterPosition,
             captureColor = paintingTeam ?: claimingTeam,
@@ -47,11 +43,12 @@ class FloorScanner(
 
     private fun getNode(floor: Floor, side: NodeSide): Node {
         val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
-        val isOpen = mc.world?.getBlockState(worldCoords)?.isAir
+        // CENTER is the tower interior — not a valid bridge endpoint
+        val isOpen = if (side == NodeSide.CENTER) false else mc.world?.getBlockState(worldCoords)?.isAir ?: false
 
         return Node(
             side = side,
-            isOpen = isOpen ?: false,
+            isOpen = isOpen,
             floor = floor,
             worldPosition = worldCoords,
         )

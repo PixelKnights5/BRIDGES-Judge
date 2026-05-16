@@ -3,6 +3,7 @@ package com.pixelknights.bridgesgame.client.game.entity
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.di.Channels
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
+import com.pixelknights.bridgesgame.client.game.entity.scanner.LadderScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
 import com.pixelknights.bridgesgame.client.util.plus
@@ -20,6 +21,7 @@ import kotlin.getValue
 class GameBoard(
     private val towerScanner: TowerScanner,
     private val bridgeScanner: BridgeScanner,
+    private val ladderScanner: LadderScanner,
     private val dotRenderer: DotRenderer,
     private val lineRenderer: LineRenderer,
     private val config: ModConfig,
@@ -30,6 +32,7 @@ class GameBoard(
 
     private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
+    private var ladders: MutableSet<Ladder> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
     private val errorChannel: BlockingQueue<String> by inject<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel))
 
@@ -61,12 +64,19 @@ class GameBoard(
             .flatMap { it.nodes }
             .toList()
 
-
+        // Build list o bridges
         nodeMap.forEach { node ->
             bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
-        connectBridges()
+        // build list of ladders
+        ladders += towers.flatten().flatMap { ladderScanner.getLaddersForTower(it) }
+
+
+        // TODO: Build list of circuits
+
+
+        connectConnections()
         calculateScores()
         createDebugLines()
         createTowerStatsText(towers.flatten().toList(), centerCoordinate)
@@ -74,6 +84,7 @@ class GameBoard(
 
     fun resetGame() {
         bridges.clear()
+        ladders.clear()
         paths.clear()
         teams.clear()
         towers.clear()
@@ -93,13 +104,14 @@ class GameBoard(
 
     }
 
-    private fun connectBridges() {
-        bridges.forEach { bridge ->
-            val startNode = bridge.startNode
-            val endNode = bridge.endNode
+    private fun connectConnections() {
+        val allConnections: Set<Connection> = bridges + ladders
+        allConnections.forEach { connection ->
+            val startNode = connection.nodeA
+            val endNode = connection.nodeB
 
-            startNode.connectedBridges += bridge
-            endNode?.connectedBridges += bridge
+            startNode.connections += connection
+            endNode?.connections += connection
 
             // Draw debug lines/dots
 //            if (endNode != null) {
@@ -140,8 +152,8 @@ class GameBoard(
 
         // Calculate moves
         teams.forEach { (teamColor, team) ->
-            val numBridgeClaims = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.owner == teamColor }
-            val numBridgePaints = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
+            val numBridgeClaims = bridges.filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.owner == teamColor }
+            val numBridgePaints = bridges.filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
             val floorClaims = towers.flatten().flatMap { it.floors }.count { it.captureColor == teamColor }
             val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
             val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }

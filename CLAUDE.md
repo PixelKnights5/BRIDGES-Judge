@@ -26,6 +26,7 @@ The minigame is 100% playable without using the mod. The mod is intended to be a
 - `.docs/titancraft-s10` - Rules/docs for Titancraft server, season 10. Provides legacy context for previous game rules in season 10. 
 - `.docs/titancraft-s11` - Rules/docs for Titancraft server, season 11. Provides current game rules for the upcoming season
 - `run/` - A local minecraft instance for testing
+- `resources/assets/bridges-judge/config` - Configuration files for the mod, including color and height map for towers in the game. 
 
 ## Standards
 
