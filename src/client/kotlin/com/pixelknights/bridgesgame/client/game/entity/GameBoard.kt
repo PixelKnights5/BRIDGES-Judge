@@ -180,6 +180,21 @@ class GameBoard(
                 }
             }
 
+        // Report bridges that connect to/from a closed node
+        bridges
+            .filter { ConnectionError.BRIDGE_TO_CLOSED_NODE in it.errors }
+            .distinctBy { it.blocks.toSet() }
+            .forEach { bridge ->
+                val team = bridge.owner ?: bridge.painter ?: return@forEach
+                errorChannel += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) connects to a closed node"
+                val centerPos = BlockPos(
+                    bridge.blocks.map { it.x }.average().toInt(),
+                    bridge.nodeA.worldPosition.y,
+                    bridge.blocks.map { it.z }.average().toInt(),
+                )
+                warningIconRenderer.warnings += WarningIcon(centerPos, Color.fromHex(team.rgba))
+            }
+
         // Report bridges that belong to a team but are not reachable from their home base
         paths.forEach { path ->
             val team = path.pathOwner ?: return@forEach

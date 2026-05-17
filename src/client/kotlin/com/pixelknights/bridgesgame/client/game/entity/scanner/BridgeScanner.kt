@@ -39,14 +39,22 @@ class BridgeScanner (
             val painter = template.findBridgePainter(mc, node.worldPosition.down(1))
             val endNode = allNodes.filter { it.worldPosition == (node.worldPosition + template.targetNodeOffset) }
 
-            if (endNode.isEmpty()) {
+            if (!node.isOpen) {
+                errors += ConnectionError.BRIDGE_TO_CLOSED_NODE
+                // If the target is open, this bridge is already detected from the open side — skip to avoid double-reporting.
+                if (endNode.any { it.isOpen }) {
+                    return@map null
+                }
+            }
+
+            if (endNode.none { it.isOpen }) {
                 errors += ConnectionError.BRIDGE_TO_CLOSED_NODE
             }
 
             return@map Bridge(
-                blocks = template.blockCoords.map(::BlockPos),
+                blocks = template.translate(node.worldPosition.down(2)).blockCoords.map(::BlockPos),
                 nodeA = node,
-                nodeB = endNode.firstOrNull(),
+                nodeB = endNode.firstOrNull { it.isOpen },
                 owner = owner,
                 painter = painter,
                 errors = errors,
