@@ -178,7 +178,17 @@ class GameBoard(
                 }
             }
 
-        //TODO: report bridge errors
+        // Report bridges that belong to a team but are not reachable from their home base
+        paths.forEach { path ->
+            val team = path.pathOwner ?: return@forEach
+            bridges
+                .filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }
+                .filter { it.owner == team || it.painter == team }
+                .filter { it !in path.connections }
+                .forEach { bridge ->
+                    errorChannel += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base"
+                }
+        }
     }
 
     /**
