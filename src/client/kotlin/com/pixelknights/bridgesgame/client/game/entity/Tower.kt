@@ -20,8 +20,8 @@ class Tower(
     var coords: String = "${'A' + column}${1 + row}"
 
     fun worldCoordinates(centerTowerPos: BlockPos, config: ModConfig): BlockPos {
-        val centerTowerRow = config.boardConfig.width / 2
-        val centerTowerCol = config.boardConfig.height / 2
+        val centerTowerRow = config.boardConfig.height / 2
+        val centerTowerCol = config.boardConfig.width / 2
         val rowsFromCenter = row - centerTowerRow
         val colsFromCenter = column - centerTowerCol
         val worldX = centerTowerPos.x + (config.spaceBetweenCenters * colsFromCenter)

@@ -12,8 +12,8 @@ class TowerTest {
     fun `validate tower world coords in negative x and negative z directions`() {
         val config = ModConfig(
             boardConfig = BoardConfig(
-                width = 19,
-                height = 19,
+                width = 13,
+                height = 11,
                 blocksBetweenTowers = 5,
                 towerDiameter = 5
             ),
@@ -21,9 +21,10 @@ class TowerTest {
         )
 
         val centerPos = BlockPos(534, 0, 314)
-        val expectedCoords = BlockPos(454, 0, 264)
+        // row=2, col=1: centerRow=5, centerCol=6; rowsFromCenter=-3, colsFromCenter=-5, spacing=10
+        val expectedCoords = BlockPos(484, 0, 284)
         val tower = Tower(
-            row = 4,
+            row = 2,
             column = 1,
             numFloors = 1,
             color = GameColor.GREY,
@@ -38,10 +39,11 @@ class TowerTest {
     fun `validate tower world coords in positive x and positive z directions`() {
 
         val centerPos = BlockPos(534, 0, 314)
-        val expectedCoords = BlockPos(614, 0, 364)
+        // row=8, col=11: centerRow=5, centerCol=6; rowsFromCenter=3, colsFromCenter=5, spacing=10
+        val expectedCoords = BlockPos(584, 0, 344)
         val tower = Tower(
-            row = 14,
-            column = 17,
+            row = 8,
+            column = 11,
             numFloors = 1,
             color = GameColor.GREY,
             isBase = false,
@@ -54,8 +56,8 @@ class TowerTest {
     companion object {
         private val config = ModConfig(
             boardConfig = BoardConfig(
-                width = 19,
-                height = 19,
+                width = 13,
+                height = 11,
                 blocksBetweenTowers = 5,
                 towerDiameter = 5
             ),
