@@ -14,6 +14,7 @@ object BridgesModels {
     val LINE_START: ExtraModelKey<BlockStateModel> = ExtraModelKey.create { "$MOD_ID:line_start" }
     val LINE_MIDDLE: ExtraModelKey<BlockStateModel> = ExtraModelKey.create { "$MOD_ID:line_middle" }
     val LINE_END: ExtraModelKey<BlockStateModel> = ExtraModelKey.create { "$MOD_ID:line_end" }
+    val WARNING_ICON: ExtraModelKey<BlockStateModel> = ExtraModelKey.create { "$MOD_ID:warning_icon" }
 
     fun register() {
         ModelLoadingPlugin.register { context ->
@@ -29,6 +30,9 @@ object BridgesModels {
             context.addModel(LINE_END, SimpleUnbakedExtraModel.blockStateModel(
                 Identifier.of(MOD_ID, "misc/line_end")
             ))
+            context.addModel(WARNING_ICON, SimpleUnbakedExtraModel.blockStateModel(
+                Identifier.of(MOD_ID, "misc/warning_icon")
+            ))
         }
     }
 
@@ -39,4 +43,5 @@ object BridgesModels {
     fun bakedLineStart(): BlockStateModel? = manager.getModel(LINE_START)
     fun bakedLineMiddle(): BlockStateModel? = manager.getModel(LINE_MIDDLE)
     fun bakedLineEnd(): BlockStateModel? = manager.getModel(LINE_END)
+    fun bakedWarningIcon(): BlockStateModel? = manager.getModel(WARNING_ICON)
 }

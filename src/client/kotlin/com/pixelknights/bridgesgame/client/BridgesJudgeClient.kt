@@ -6,6 +6,7 @@ import com.pixelknights.bridgesgame.client.render.BridgesModels
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
+import com.pixelknights.bridgesgame.client.render.WarningIconRenderer
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents
 import org.apache.logging.log4j.LogManager
@@ -20,16 +21,16 @@ class BridgesJudgeClient : ClientModInitializer {
         val koin = initDi()
 
         koin.koin.get<CommandRegistry>().registerCommands()
-        renderDebugObjects(koin.koin.get(), koin.koin.get(), koin.koin.get())
+        renderDebugObjects(koin.koin.get(), koin.koin.get(), koin.koin.get(), koin.koin.get())
     }
 
 }
 
-fun renderDebugObjects(dotRenderer: DotRenderer, lineRenderer: LineRenderer, textRenderer: HoveringTextRenderer) {
+fun renderDebugObjects(dotRenderer: DotRenderer, lineRenderer: LineRenderer, textRenderer: HoveringTextRenderer, warningIconRenderer: WarningIconRenderer) {
     WorldRenderEvents.AFTER_ENTITIES.register { context ->
         dotRenderer.renderDots(context)
         lineRenderer.renderLines(context)
-
+        warningIconRenderer.renderWarnings(context)
     }
 
     WorldRenderEvents.END_MAIN.register { context ->

@@ -14,6 +14,7 @@ import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
+import com.pixelknights.bridgesgame.client.render.WarningIconRenderer
 import net.minecraft.client.MinecraftClient
 import org.apache.logging.log4j.LogManager
 import org.koin.core.KoinApplication
@@ -50,6 +51,7 @@ val appModule = module {
     singleOf(::DotRenderer)
     singleOf(::LineRenderer)
     singleOf(::HoveringTextRenderer)
+    singleOf(::WarningIconRenderer)
     single<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel)) {
         LinkedBlockingQueue()
     }

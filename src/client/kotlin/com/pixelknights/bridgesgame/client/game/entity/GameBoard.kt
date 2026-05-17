@@ -30,6 +30,7 @@ class GameBoard(
     private val mc: MinecraftClient,
     private val logger: Logger,
     private val textRenderer: HoveringTextRenderer,
+    private val warningIconRenderer: WarningIconRenderer,
 ) : KoinComponent {
 
     private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
@@ -98,6 +99,7 @@ class GameBoard(
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
         textRenderer.textToRender.clear()
+        warningIconRenderer.warnings.clear()
     }
 
     fun createRenderedLines() {
@@ -187,6 +189,10 @@ class GameBoard(
                 .filter { it !in path.connections }
                 .forEach { bridge ->
                     errorChannel += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base"
+                    val midX = (bridge.nodeA.worldPosition.x + (bridge.nodeB?.worldPosition?.x ?: bridge.nodeA.worldPosition.x)) / 2
+                    val midY = maxOf(bridge.nodeA.worldPosition.y, bridge.nodeB?.worldPosition?.y ?: bridge.nodeA.worldPosition.y)
+                    val midZ = (bridge.nodeA.worldPosition.z + (bridge.nodeB?.worldPosition?.z ?: bridge.nodeA.worldPosition.z)) / 2
+                    warningIconRenderer.warnings += WarningIcon(BlockPos(midX, midY, midZ), Color.fromHex(team.rgba))
                 }
         }
     }
