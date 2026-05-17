@@ -22,8 +22,8 @@ class RenderedLine(
     }
 
     val dots: List<RenderedDot> = listOf(
-        RenderedDot(start, Color.GREEN, noiseVector),
-        RenderedDot(end, Color.BLUE, noiseVector)
+        RenderedDot(start, color, noiseVector),
+        RenderedDot(end, color, noiseVector)
     )
 
     companion object {
