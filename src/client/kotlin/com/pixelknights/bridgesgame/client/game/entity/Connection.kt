@@ -6,6 +6,7 @@ enum class ConnectionError {
     BRIDGE_TO_CLOSED_NODE,
     MULTIPLE_BRIDGES_TO_SINGLE_NODE,
     INCORRECT_SHAPE,
+    CIRCUIT_TO_CLOSED_NODE,
 }
 
 sealed interface Connection {

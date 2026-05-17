@@ -110,8 +110,8 @@ class Path (
     fun createDebugLines(world: World, config: ModConfig): List<DebugLine> {
         val color = Color.fromHex(pathOwner?.rgba ?: 0)
 
-        return connections.mapNotNull { connection ->
-            val endNode = connection.nodeB ?: return@mapNotNull null
+        return connections.flatMap { connection ->
+            val endNode = connection.nodeB ?: return@flatMap emptyList()
             when (connection) {
                 is Ladder -> {
                     // Offset by the ladder's facing direction so the line isn't hidden inside the beacon beam
@@ -119,11 +119,34 @@ class Path (
                     val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
                     val startPos = connection.nodeA.floor.worldCenter + facing.vector
                     val endPos = endNode.floor.worldCenter + facing.vector
-                    DebugLine(startPos, endPos, color)
+                    listOf(DebugLine(startPos, endPos, color))
                 }
-                is Bridge -> DebugLine(connection.nodeA.worldPosition, endNode.worldPosition, color)
-                is Circuit -> null
+                is Bridge -> listOf(DebugLine(connection.nodeA.worldPosition, endNode.worldPosition, color))
+                is Circuit -> circuitDebugLines(connection, color)
             }
+        }
+    }
+
+    private companion object {
+        fun circuitDebugLines(circuit: Circuit, color: Color): List<DebugLine> {
+            val blockSet = circuit.blocks.toSet()
+            val lines = mutableListOf<DebugLine>()
+
+            // For each axis, find runs of consecutive blocks and emit one line per run
+            for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
+                for (block in circuit.blocks) {
+                    if (block.offset(dir.opposite) in blockSet) continue  // not the start of a run
+                    val next = block.offset(dir)
+                    if (next !in blockSet) continue  // no neighbor in this direction
+
+                    var end = next
+                    while (end.offset(dir) in blockSet) end = end.offset(dir)
+
+                    lines += DebugLine(block.up(2), end.up(2), color)
+                }
+            }
+
+            return lines
         }
     }
 }

@@ -3,6 +3,7 @@ package com.pixelknights.bridgesgame.client.game.entity
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.di.Channels
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
+import com.pixelknights.bridgesgame.client.game.entity.scanner.CircuitScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.LadderScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
@@ -22,6 +23,7 @@ class GameBoard(
     private val towerScanner: TowerScanner,
     private val bridgeScanner: BridgeScanner,
     private val ladderScanner: LadderScanner,
+    private val circuitScanner: CircuitScanner,
     private val dotRenderer: DotRenderer,
     private val lineRenderer: LineRenderer,
     private val config: ModConfig,
@@ -33,6 +35,7 @@ class GameBoard(
     private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
     private var ladders: MutableSet<Ladder> = mutableSetOf()
+    private var circuits: MutableSet<Circuit> = mutableSetOf()
     private val paths: MutableList<Path> = mutableListOf()
     private val errorChannel: BlockingQueue<String> by inject<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel))
 
@@ -73,7 +76,10 @@ class GameBoard(
         ladders += towers.flatten().flatMap { ladderScanner.getLaddersForTower(it) }
 
 
-        // TODO: Build list of circuits
+        // Build list of circuits
+        nodeMap.forEach { node ->
+            circuits += circuitScanner.getCircuitsForNode(node, nodeMap)
+        }
 
 
         connectConnections()
@@ -85,6 +91,7 @@ class GameBoard(
     fun resetGame() {
         bridges.clear()
         ladders.clear()
+        circuits.clear()
         paths.clear()
         teams.clear()
         towers.clear()
@@ -105,7 +112,7 @@ class GameBoard(
     }
 
     private fun connectConnections() {
-        val allConnections: Set<Connection> = bridges + ladders
+        val allConnections: Set<Connection> = bridges + ladders + circuits
         allConnections.forEach { connection ->
             val startNode = connection.nodeA
             val endNode = connection.nodeB
