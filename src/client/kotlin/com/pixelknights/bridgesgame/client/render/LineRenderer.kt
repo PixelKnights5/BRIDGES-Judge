@@ -25,7 +25,9 @@ class LineRenderer : KoinComponent {
     val config: ModConfig by inject()
 
     fun renderLines(context: WorldRenderContext) {
-        if (!config.playerSettings.showBridgePaths) return
+        if (!config.playerSettings.showBridgePaths) {
+            return
+        }
 
         val matrices = context.matrices()
         val cameraPos = context.worldState().cameraRenderState.pos
@@ -54,7 +56,9 @@ class LineRenderer : KoinComponent {
 
             val dx = bx - ax; val dy = by - ay; val dz = bz - az
             val length = sqrt(dx * dx + dy * dy + dz * dz)
-            if (length < 1e-4f) continue
+            if (length < 1e-4f) {
+                continue
+            }
             val ffx = dx / length; val ffy = dy / length; val ffz = dz / length
 
             val rx: Float; val ry: Float; val rz: Float

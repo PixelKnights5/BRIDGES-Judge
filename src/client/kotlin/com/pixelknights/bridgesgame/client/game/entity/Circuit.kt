@@ -16,8 +16,12 @@ data class Circuit(
     override fun canTeamUse(team: GameColor): Boolean = nodeB != null
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Circuit) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is Circuit) {
+            return false
+        }
 
         return ((nodeA == other.nodeA && nodeB == other.nodeB) ||
                 (nodeA == other.nodeB && nodeB == other.nodeA))

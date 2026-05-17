@@ -17,8 +17,12 @@ data class Bridge(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Bridge) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is Bridge) {
+            return false
+        }
 
         return ((nodeA == other.nodeA && nodeB == other.nodeB) ||
                 (nodeA == other.nodeB && nodeB == other.nodeA))

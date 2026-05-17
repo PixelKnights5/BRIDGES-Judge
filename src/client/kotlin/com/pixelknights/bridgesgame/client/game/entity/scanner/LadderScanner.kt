@@ -16,7 +16,9 @@ class LadderScanner(private val mc: MinecraftClient) {
             val upperFloor = tower.floors[i + 1]
 
             val hasLadder = mc.world?.getBlockState(lowerFloor.worldCenter)?.block == Blocks.LADDER
-            if (!hasLadder) continue
+            if (!hasLadder) {
+                continue
+            }
 
             val lowerCenterNode = lowerFloor.nodes.first { it.side == NodeSide.CENTER }
             val upperCenterNode = upperFloor.nodes.first { it.side == NodeSide.CENTER }

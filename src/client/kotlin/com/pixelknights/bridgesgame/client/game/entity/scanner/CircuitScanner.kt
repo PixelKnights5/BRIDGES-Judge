@@ -40,9 +40,13 @@ class CircuitScanner(private val mc: MinecraftClient) {
             val cur = queue.removeFirst()
             val curBlock = world.getBlockState(cur).block
             for (neighbor in cur.adjacentFaceNeighbors()) {
-                if (neighbor in visited) continue
+                if (neighbor in visited) {
+                    continue
+                }
                 val neighborBlock = world.getBlockState(neighbor).block
-                if (!blocksConnect(curBlock, neighborBlock, cur, neighbor)) continue
+                if (!blocksConnect(curBlock, neighborBlock, cur, neighbor)) {
+                    continue
+                }
 
                 visited += neighbor
                 queue += neighbor
@@ -66,7 +70,9 @@ class CircuitScanner(private val mc: MinecraftClient) {
         private val CIRCUIT_BLOCKS = setOf(Blocks.SCULK, Blocks.TWISTING_VINES, Blocks.TWISTING_VINES_PLANT)
 
         private fun blocksConnect(a: Block, b: Block, posA: BlockPos, posB: BlockPos): Boolean {
-            if (a !in CIRCUIT_BLOCKS || b !in CIRCUIT_BLOCKS) return false
+            if (a !in CIRCUIT_BLOCKS || b !in CIRCUIT_BLOCKS) {
+                return false
+            }
             return if (posA.y != posB.y) {
                 true // any sculk/vine combo connects vertically
             } else {

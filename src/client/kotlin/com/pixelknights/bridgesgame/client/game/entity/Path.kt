@@ -143,12 +143,18 @@ class Path (
             // For each axis, find runs of consecutive blocks and emit one line per run
             for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
                 for (block in circuit.blocks) {
-                    if (block.offset(dir.opposite) in blockSet) continue  // not the start of a run
+                    if (block.offset(dir.opposite) in blockSet) {
+                        continue  // not the start of a run
+                    }
                     val next = block.offset(dir)
-                    if (next !in blockSet) continue  // no neighbor in this direction
+                    if (next !in blockSet) {
+                        continue  // no neighbor in this direction
+                    }
 
                     var end = next
-                    while (end.offset(dir) in blockSet) end = end.offset(dir)
+                    while (end.offset(dir) in blockSet) {
+                        end = end.offset(dir)
+                    }
 
                     lines += RenderedLine(block.up(2), end.up(2), color, noiseVectorOverride = noiseVec)
                 }

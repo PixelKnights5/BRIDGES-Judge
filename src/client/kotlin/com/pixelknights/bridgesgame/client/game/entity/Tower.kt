@@ -69,11 +69,19 @@ class Tower(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Tower) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is Tower) {
+            return false
+        }
 
-        if (row != other.row) return false
-        if (column != other.column) return false
+        if (row != other.row) {
+            return false
+        }
+        if (column != other.column) {
+            return false
+        }
 
         return true
     }

@@ -14,7 +14,9 @@ class BridgeScanner (
 ) {
 
     fun getBridgesForNode(node: Node, allNodes: List<Node>): Set<Bridge> {
-        if (node.side == NodeSide.CENTER) return emptySet()
+        if (node.side == NodeSide.CENTER) {
+            return emptySet()
+        }
 
         return BridgeTemplate.ALL_BRIDGE_COMBINATIONS.flatten().map { template ->
 

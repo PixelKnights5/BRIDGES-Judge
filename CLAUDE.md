@@ -31,7 +31,21 @@ The minigame is 100% playable without using the mod. The mod is intended to be a
 ## Standards
 
 - The mod MUST run client-side only, and cannot connect to any external server for any reason.
-- Run lint validations prior to completing, and fix issues that it identifies. 
+  - Run lint validations prior to completing, and fix issues that it identifies. 
+  - Always use {} blocks rather than same-line or next line implied blocks. For example, the code below is not acceptable
+      ```
+          // Move continue into {} brackets and not on the same line
+          if (condition) return foo
+          // should be
+          if (condition) {
+              return foo
+          }
+  
+          // technically correct, but harder to read and more error prone if additional logic added in the future.. 
+          if (condition) 
+              return foo
+  
+      ```
 
 ## Common Commands
 

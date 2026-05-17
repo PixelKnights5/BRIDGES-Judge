@@ -12,7 +12,9 @@
       "WebFetch(domain:wiki.fabricmc.net)",
       "Bash(./gradlew compileClientKotlin)",
       "Bash(grep -E \"\\\\.kt$\")",
-      "Bash(./gradlew test *)"
+      "Bash(./gradlew test *)",
+      "Bash(grep -v \"\\\\-\\\\-$\")",
+      "Bash(grep -v \"{$\")"
     ]
   }
 }
