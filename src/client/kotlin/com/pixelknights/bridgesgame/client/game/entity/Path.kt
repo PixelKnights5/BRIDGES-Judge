@@ -2,10 +2,12 @@ package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.render.Color
-import com.pixelknights.bridgesgame.client.render.DebugLine
+import com.pixelknights.bridgesgame.client.render.RenderedLine
 import com.pixelknights.bridgesgame.client.util.plus
+import com.pixelknights.bridgesgame.client.util.randomFloat
 import net.minecraft.block.LadderBlock
 import net.minecraft.util.math.Direction
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 import java.util.concurrent.BlockingQueue
 
@@ -107,7 +109,7 @@ class Path (
         }
     }
 
-    fun createDebugLines(world: World, config: ModConfig): List<DebugLine> {
+    fun createRenderedLines(world: World, config: ModConfig): List<RenderedLine> {
         val color = Color.fromHex(pathOwner?.rgba ?: 0)
 
         return connections.flatMap { connection ->
@@ -119,18 +121,24 @@ class Path (
                     val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
                     val startPos = connection.nodeA.floor.worldCenter + facing.vector
                     val endPos = endNode.floor.worldCenter + facing.vector
-                    listOf(DebugLine(startPos, endPos, color))
+                    listOf(RenderedLine(startPos, endPos, color))
                 }
-                is Bridge -> listOf(DebugLine(connection.nodeA.worldPosition, endNode.worldPosition, color))
-                is Circuit -> circuitDebugLines(connection, color)
+                is Bridge -> listOf(RenderedLine(connection.nodeA.worldPosition, endNode.worldPosition, color))
+                is Circuit -> circuitRenderedLines(connection, color)
             }
         }
     }
 
     private companion object {
-        fun circuitDebugLines(circuit: Circuit, color: Color): List<DebugLine> {
+        fun circuitRenderedLines(circuit: Circuit, color: Color): List<RenderedLine> {
             val blockSet = circuit.blocks.toSet()
-            val lines = mutableListOf<DebugLine>()
+            val lines = mutableListOf<RenderedLine>()
+            // Shared noise vector across all segments so corners connect.
+            val noiseVec = Vec3d(
+                (-0.5..0.5).randomFloat().toDouble() / 2,
+                (-0.5..0.5).randomFloat().toDouble() / 2,
+                (-0.5..0.5).randomFloat().toDouble() / 2,
+            )
 
             // For each axis, find runs of consecutive blocks and emit one line per run
             for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
@@ -142,7 +150,7 @@ class Path (
                     var end = next
                     while (end.offset(dir) in blockSet) end = end.offset(dir)
 
-                    lines += DebugLine(block.up(2), end.up(2), color)
+                    lines += RenderedLine(block.up(2), end.up(2), color, noiseVectorOverride = noiseVec)
                 }
             }
 

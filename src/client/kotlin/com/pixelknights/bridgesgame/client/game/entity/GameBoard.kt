@@ -84,7 +84,7 @@ class GameBoard(
 
         connectConnections()
         calculateScores()
-        createDebugLines()
+        createRenderedLines()
         createTowerStatsText(towers.flatten().toList(), centerCoordinate)
     }
 
@@ -100,11 +100,11 @@ class GameBoard(
         textRenderer.textToRender.clear()
     }
 
-    fun createDebugLines() {
+    fun createRenderedLines() {
         // TODO: Consider moving this to a separate class
 
         paths.forEach { path ->
-            val lines = path.createDebugLines(mc.world!!, config)
+            val lines = path.createRenderedLines(mc.world!!, config)
             lineRenderer.linesToRender += lines
             dotRenderer.dotsToRender += lines.flatMap { it.dots }
         }
@@ -120,14 +120,6 @@ class GameBoard(
             startNode.connections += connection
             endNode?.connections += connection
 
-            // Draw debug lines/dots
-//            if (endNode != null) {
-//                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.fromHex(bridge.owner?.rgba ?: 0))
-//                lineRenderer.linesToRender += line
-//                dotRenderer.dotsToRender += line.dots
-//            } else {
-//                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
-//            }
         }
     }
 

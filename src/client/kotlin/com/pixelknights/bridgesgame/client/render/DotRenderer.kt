@@ -14,7 +14,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class DotRenderer : KoinComponent {
-    val dotsToRender: MutableSet<DebugDot> = mutableSetOf()
+    val dotsToRender: MutableSet<RenderedDot> = mutableSetOf()
 
     val config: ModConfig by inject()
 

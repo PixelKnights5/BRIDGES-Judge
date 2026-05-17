@@ -20,7 +20,7 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 class LineRenderer : KoinComponent {
-    val linesToRender = mutableSetOf<DebugLine>()
+    val linesToRender = mutableSetOf<RenderedLine>()
 
     val config: ModConfig by inject()
 
