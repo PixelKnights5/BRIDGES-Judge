@@ -9,7 +9,6 @@ import net.minecraft.block.LadderBlock
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
-import java.util.concurrent.BlockingQueue
 
 
 class Path (
@@ -47,7 +46,7 @@ class Path (
      * Build a connection network and validate floors along the way.
      * The [startingFloor] must already be connected to the existing path.
      */
-    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errorChannel: BlockingQueue<String>) {
+    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errors: MutableList<String>) {
         if (startingFloor in floors) {
             return
         }
@@ -63,7 +62,7 @@ class Path (
         floors += startingFloor
 
         for (node in startingFloor.nodes) {
-            var nextConnection: Connection? = null
+            var nextConnection: Connection?
 
             if (node.connections.size > 1) {
                 // Choose the path that is most beneficial to the team and invalidate the others
@@ -76,15 +75,15 @@ class Path (
                     }
                     val endNode = connection.nodeB
                     if (endNode != null) {
-                        pathOption.buildPath(endNode.floor, allTowers, errorChannel)
-                        pathOption.buildPath(connection.nodeA.floor, allTowers, errorChannel)
+                        pathOption.buildPath(endNode.floor, allTowers, errors)
+                        pathOption.buildPath(connection.nodeA.floor, allTowers, errors)
                         return@associate connection to pathOption
                     } else {
                         return@associate connection to null
                     }
                 }
                 if (allOptions.size > 1) {
-                    errorChannel += "Node ${node.coords} ${node.worldCoords} has multiple connections"
+                    errors += "Node ${node.coords} ${node.worldCoords} has multiple connections"
                 }
 
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
@@ -103,8 +102,8 @@ class Path (
                 connections += nextConnection
 
                 // One of these will be the same as startingFloor and return immediately.
-                buildPath(nextConnection.nodeA.floor, allTowers, errorChannel)
-                buildPath(nextConnection.nodeB?.floor ?: continue, allTowers, errorChannel)
+                buildPath(nextConnection.nodeA.floor, allTowers, errors)
+                buildPath(nextConnection.nodeB?.floor ?: continue, allTowers, errors)
             }
         }
     }

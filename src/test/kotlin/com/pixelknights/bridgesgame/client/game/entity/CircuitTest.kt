@@ -2,7 +2,6 @@ package com.pixelknights.bridgesgame.client.game.entity
 
 import net.minecraft.util.math.BlockPos
 import org.junit.jupiter.api.Test
-import java.util.concurrent.LinkedBlockingQueue
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -118,7 +117,7 @@ class CircuitTest {
         nodeB.connections += circuit
 
         val path = Path(pathOwner = GameColor.ORANGE)
-        path.buildPath(floor0, listOf(tower), LinkedBlockingQueue())
+        path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertTrue(floor0 in path.floors, "floor0 should be in path")
         assertTrue(floor1 in path.floors, "floor1 should be in path")
@@ -139,7 +138,7 @@ class CircuitTest {
         floor0.perimeterNode(NodeSide.N).connections += danglingCircuit
 
         val path = Path(pathOwner = GameColor.ORANGE)
-        path.buildPath(floor0, listOf(tower), LinkedBlockingQueue())
+        path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertEquals(setOf(floor0), path.floors)
     }

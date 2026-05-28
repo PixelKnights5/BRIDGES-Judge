@@ -59,6 +59,7 @@ dependencies {
     // Non-minecraft deps
 //    implementation(project.dependencies.platform("io.insert-koin:koin-bom))
     include(implementation("io.insert-koin", "koin-core", project.property("koin_version").toString()))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${project.property("coroutines_version")}")
     testImplementation("io.insert-koin:koin-test:${project.property("koin_version")}")
     testImplementation("io.mockk:mockk:${project.property("mockk_version")}")
 

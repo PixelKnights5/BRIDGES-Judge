@@ -14,7 +14,8 @@
       "Bash(grep -E \"\\\\.kt$\")",
       "Bash(./gradlew test *)",
       "Bash(grep -v \"\\\\-\\\\-$\")",
-      "Bash(grep -v \"{$\")"
+      "Bash(grep -v \"{$\")",
+      "Bash(grep -i \"\\\\.kt$\")"
     ]
   }
 }
