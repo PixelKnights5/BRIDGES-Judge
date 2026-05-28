@@ -27,7 +27,7 @@ class LadderScanner(private val mc: MinecraftClient) {
             ladders += Ladder(
                 nodeA = lowerCenterNode,
                 nodeB = upperCenterNode,
-                segments = listOf(ConnectionSegment(lowerFloor.worldCenter, upperFloor.worldCenter)),
+                segments = listOf(ConnectionSegment(lowerCenterNode.worldPosition, upperCenterNode.worldPosition)),
             )
         }
 

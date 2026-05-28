@@ -62,7 +62,7 @@ class CircuitScanner(private val mc: MinecraftClient) {
             Circuit(
                 nodeA = node,
                 nodeB = endNode,
-                segments = blocksToSegments(visited.toList()),
+                segments = blocksToSegments(visited),
                 errors = errors,
             ),
         )
@@ -90,20 +90,19 @@ class CircuitScanner(private val mc: MinecraftClient) {
         private fun BlockPos.adjacentFaceNeighbors(): List<BlockPos> =
             listOf(north(), south(), east(), west(), up(), down())
 
-        fun blocksToSegments(blocks: List<BlockPos>): List<ConnectionSegment> {
-            val blockSet = blocks.toSet()
+        fun blocksToSegments(blocks: Set<BlockPos>): List<ConnectionSegment> {
             val segments = mutableListOf<ConnectionSegment>()
             for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
                 for (block in blocks) {
-                    if (block.offset(dir.opposite) in blockSet) {
+                    if (block.offset(dir.opposite) in blocks) {
                         continue  // not the start of a run
                     }
                     val next = block.offset(dir)
-                    if (next !in blockSet) {
+                    if (next !in blocks) {
                         continue  // no neighbor in this direction
                     }
                     var end = next
-                    while (end.offset(dir) in blockSet) {
+                    while (end.offset(dir) in blocks) {
                         end = end.offset(dir)
                     }
                     segments += ConnectionSegment(block, end)

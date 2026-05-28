@@ -37,7 +37,8 @@ class BridgeScanner (
             }
 
             val painter = template.findBridgePainter(mc, node.worldPosition.down(1))
-            val endNode = allNodes.filter { it.worldPosition == (node.worldPosition + template.targetNodeOffset) }
+            val segment = ConnectionSegment(node.worldPosition, node.worldPosition + template.targetNodeOffset)
+            val endNode = allNodes.filter { it.worldPosition == segment.end }
 
             if (!node.isOpen) {
                 errors += ConnectionError.BRIDGE_TO_CLOSED_NODE
@@ -52,7 +53,7 @@ class BridgeScanner (
             }
 
             return@map Bridge(
-                segments = listOf(ConnectionSegment(node.worldPosition, node.worldPosition + template.targetNodeOffset)),
+                segments = listOf(segment),
                 nodeA = node,
                 nodeB = endNode.firstOrNull { it.isOpen },
                 owner = owner,
