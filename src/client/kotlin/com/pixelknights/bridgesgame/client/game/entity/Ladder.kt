@@ -6,12 +6,15 @@ import java.util.Objects
 data class Ladder(
     override val nodeA: Node,
     override val nodeB: Node?,
-    override val blocks: List<BlockPos>,
+    override val segments: List<ConnectionSegment>,
 ) : Connection {
 
     override val owner: GameColor? = null
     override val painter: GameColor? = null
     override val errors: List<ConnectionError> = emptyList()
+    override val midpoint: BlockPos = segments.singleOrNull()?.let { seg ->
+        BlockPos((seg.start.x + seg.end.x) / 2, (seg.start.y + seg.end.y) / 2, (seg.start.z + seg.end.z) / 2)
+    } ?: nodeA.floor.worldCenter
 
     override fun canTeamUse(team: GameColor): Boolean = nodeB != null
 

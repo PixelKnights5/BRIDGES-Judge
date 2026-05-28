@@ -15,7 +15,8 @@ sealed interface Connection {
     val owner: GameColor?
     val painter: GameColor?
     val errors: List<ConnectionError>
-    val blocks: List<BlockPos>
+    val segments: List<ConnectionSegment>
+    val midpoint: BlockPos
 
     fun otherEnd(node: Node): Node? = when (node) {
         nodeA -> nodeB

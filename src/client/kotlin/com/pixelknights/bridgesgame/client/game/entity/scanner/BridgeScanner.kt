@@ -2,12 +2,12 @@ package com.pixelknights.bridgesgame.client.game.entity.scanner
 
 import com.pixelknights.bridgesgame.client.game.entity.Bridge
 import com.pixelknights.bridgesgame.client.game.entity.ConnectionError
+import com.pixelknights.bridgesgame.client.game.entity.ConnectionSegment
 import com.pixelknights.bridgesgame.client.game.entity.Node
 import com.pixelknights.bridgesgame.client.game.entity.NodeSide
 import com.pixelknights.bridgesgame.client.game.rules.BridgeTemplate
 import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.client.MinecraftClient
-import net.minecraft.util.math.BlockPos
 
 class BridgeScanner (
     private val mc: MinecraftClient,
@@ -52,7 +52,7 @@ class BridgeScanner (
             }
 
             return@map Bridge(
-                blocks = template.translate(node.worldPosition.down(2)).blockCoords.map(::BlockPos),
+                segments = listOf(ConnectionSegment(node.worldPosition, node.worldPosition + template.targetNodeOffset)),
                 nodeA = node,
                 nodeB = endNode.firstOrNull { it.isOpen },
                 owner = owner,

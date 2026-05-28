@@ -1,5 +1,6 @@
 package com.pixelknights.bridgesgame.client.game.entity.scanner
 
+import com.pixelknights.bridgesgame.client.game.entity.ConnectionSegment
 import com.pixelknights.bridgesgame.client.game.entity.Ladder
 import com.pixelknights.bridgesgame.client.game.entity.NodeSide
 import com.pixelknights.bridgesgame.client.game.entity.Tower
@@ -26,7 +27,7 @@ class LadderScanner(private val mc: MinecraftClient) {
             ladders += Ladder(
                 nodeA = lowerCenterNode,
                 nodeB = upperCenterNode,
-                blocks = listOf(lowerFloor.worldCenter),
+                segments = listOf(ConnectionSegment(lowerFloor.worldCenter, upperFloor.worldCenter)),
             )
         }
 

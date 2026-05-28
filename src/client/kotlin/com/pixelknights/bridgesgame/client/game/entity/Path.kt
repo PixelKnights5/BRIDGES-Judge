@@ -112,54 +112,29 @@ class Path (
         val color = Color.fromHex(pathOwner?.rgba ?: 0)
 
         return connections.flatMap { connection ->
-            val endNode = connection.nodeB ?: return@flatMap emptyList()
+            connection.nodeB ?: return@flatMap emptyList()
             when (connection) {
                 is Ladder -> {
                     // Offset by the ladder's facing direction so the line isn't hidden inside the beacon beam
                     val ladderBlock = world.getBlockState(connection.nodeA.floor.worldCenter)
                     val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
-                    val startPos = connection.nodeA.floor.worldCenter + facing.vector
-                    val endPos = endNode.floor.worldCenter + facing.vector
-                    listOf(RenderedLine(startPos, endPos, color))
+                    connection.segments.map { seg ->
+                        RenderedLine(seg.start + facing.vector, seg.end + facing.vector, color)
+                    }
                 }
-                is Bridge -> listOf(RenderedLine(connection.nodeA.worldPosition, endNode.worldPosition, color))
-                is Circuit -> circuitRenderedLines(connection, color)
-            }
-        }
-    }
-
-    private companion object {
-        fun circuitRenderedLines(circuit: Circuit, color: Color): List<RenderedLine> {
-            val blockSet = circuit.blocks.toSet()
-            val lines = mutableListOf<RenderedLine>()
-            // Shared noise vector across all segments so corners connect.
-            val noiseVec = Vec3d(
-                (-0.5..0.5).randomFloat().toDouble() / 2,
-                (-0.5..0.5).randomFloat().toDouble() / 2,
-                (-0.5..0.5).randomFloat().toDouble() / 2,
-            )
-
-            // For each axis, find runs of consecutive blocks and emit one line per run
-            for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
-                for (block in circuit.blocks) {
-                    if (block.offset(dir.opposite) in blockSet) {
-                        continue  // not the start of a run
+                is Bridge -> connection.segments.map { seg -> RenderedLine(seg.start, seg.end, color) }
+                is Circuit -> {
+                    // Shared noise vector across all segments so corners connect visually
+                    val noiseVec = Vec3d(
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                    )
+                    connection.segments.map { seg ->
+                        RenderedLine(seg.start.up(2), seg.end.up(2), color, noiseVectorOverride = noiseVec)
                     }
-                    val next = block.offset(dir)
-                    if (next !in blockSet) {
-                        continue  // no neighbor in this direction
-                    }
-
-                    var end = next
-                    while (end.offset(dir) in blockSet) {
-                        end = end.offset(dir)
-                    }
-
-                    lines += RenderedLine(block.up(2), end.up(2), color, noiseVectorOverride = noiseVec)
                 }
             }
-
-            return lines
         }
     }
 }

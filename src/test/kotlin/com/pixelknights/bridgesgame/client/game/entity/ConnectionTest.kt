@@ -49,7 +49,7 @@ class ConnectionTest {
         val tower = makeBaseTeamTower(GameColor.ORANGE)
         val floor0 = tower.floors[0]
         val floor1 = tower.floors[1]
-        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), blocks = emptyList())
+        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), segments = emptyList())
 
         assertTrue(ladder.canTeamUse(GameColor.ORANGE))
         assertTrue(ladder.canTeamUse(GameColor.RED))
@@ -60,7 +60,7 @@ class ConnectionTest {
     fun `Ladder canTeamUse returns false when nodeB is null`() {
         val tower = makeBaseTeamTower(GameColor.ORANGE)
         val floor0 = tower.floors[0]
-        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = null, blocks = emptyList())
+        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = null, segments = emptyList())
 
         assertFalse(ladder.canTeamUse(GameColor.ORANGE))
     }
@@ -74,7 +74,7 @@ class ConnectionTest {
         val nodeB = floor1.perimeterNode(NodeSide.S)
 
         val bridge = Bridge(
-            blocks = emptyList(),
+            segments = emptyList(),
             nodeA = nodeA,
             nodeB = nodeB,
             owner = GameColor.ORANGE,
@@ -93,7 +93,7 @@ class ConnectionTest {
         val nodeA = floor0.perimeterNode(NodeSide.N)
 
         val bridge = Bridge(
-            blocks = emptyList(),
+            segments = emptyList(),
             nodeA = nodeA,
             nodeB = null,
             owner = GameColor.ORANGE,
@@ -112,7 +112,7 @@ class ConnectionTest {
         val floor1 = tower.floors[1]
         val n1 = floor0.centerNode()
         val n2 = floor1.centerNode()
-        val ladder = Ladder(nodeA = n1, nodeB = n2, blocks = emptyList())
+        val ladder = Ladder(nodeA = n1, nodeB = n2, segments = emptyList())
 
         assertEquals(n2, ladder.otherEnd(n1))
         assertEquals(n1, ladder.otherEnd(n2))
@@ -126,7 +126,7 @@ class ConnectionTest {
         val n1 = floor0.centerNode()
         val n2 = floor1.centerNode()
         val unrelated = floor0.perimeterNode(NodeSide.N)
-        val ladder = Ladder(nodeA = n1, nodeB = n2, blocks = emptyList())
+        val ladder = Ladder(nodeA = n1, nodeB = n2, segments = emptyList())
 
         assertNull(ladder.otherEnd(unrelated))
     }
@@ -141,8 +141,8 @@ class ConnectionTest {
         val n1 = floor0.centerNode()
         val n2 = floor1.centerNode()
 
-        val ladder1 = Ladder(nodeA = n1, nodeB = n2, blocks = emptyList())
-        val ladder2 = Ladder(nodeA = n2, nodeB = n1, blocks = emptyList())
+        val ladder1 = Ladder(nodeA = n1, nodeB = n2, segments = emptyList())
+        val ladder2 = Ladder(nodeA = n2, nodeB = n1, segments = emptyList())
 
         assertEquals(ladder1, ladder2)
         assertEquals(ladder1.hashCode(), ladder2.hashCode())
@@ -154,8 +154,8 @@ class ConnectionTest {
         val n1 = tower.floors[0].perimeterNode(NodeSide.N)
         val n2 = tower.floors[1].perimeterNode(NodeSide.S)
 
-        val bridge1 = Bridge(blocks = emptyList(), nodeA = n1, nodeB = n2, owner = GameColor.ORANGE, painter = null)
-        val bridge2 = Bridge(blocks = emptyList(), nodeA = n2, nodeB = n1, owner = GameColor.ORANGE, painter = null)
+        val bridge1 = Bridge(segments = emptyList(), nodeA = n1, nodeB = n2, owner = GameColor.ORANGE, painter = null)
+        val bridge2 = Bridge(segments = emptyList(), nodeA = n2, nodeB = n1, owner = GameColor.ORANGE, painter = null)
 
         assertEquals(bridge1, bridge2)
         assertEquals(bridge1.hashCode(), bridge2.hashCode())
@@ -169,7 +169,7 @@ class ConnectionTest {
         val floor0 = tower.floors[0]
         val floor1 = tower.floors[1]
 
-        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), blocks = emptyList())
+        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), segments = emptyList())
         floor0.centerNode().connections += ladder
         floor1.centerNode().connections += ladder
 
@@ -187,7 +187,7 @@ class ConnectionTest {
         val floor0 = tower.floors[0]
         val floor1 = tower.floors[1]
 
-        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), blocks = emptyList())
+        val ladder = Ladder(nodeA = floor0.centerNode(), nodeB = floor1.centerNode(), segments = emptyList())
         floor0.centerNode().connections += ladder
         floor1.centerNode().connections += ladder
 
@@ -206,7 +206,7 @@ class ConnectionTest {
         val floor0 = tower.floors[0]
 
         val brokenBridge = Bridge(
-            blocks = emptyList(),
+            segments = emptyList(),
             nodeA = floor0.perimeterNode(NodeSide.N),
             nodeB = null,
             owner = GameColor.ORANGE,

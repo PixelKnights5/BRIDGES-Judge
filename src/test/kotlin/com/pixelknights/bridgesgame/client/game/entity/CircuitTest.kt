@@ -50,7 +50,7 @@ class CircuitTest {
         val circuit = Circuit(
             nodeA = floor0.perimeterNode(NodeSide.N),
             nodeB = floor1.perimeterNode(NodeSide.S),
-            blocks = emptyList(),
+            segments = emptyList(),
         )
 
         assertTrue(circuit.canTeamUse(GameColor.ORANGE))
@@ -65,7 +65,7 @@ class CircuitTest {
         val circuit = Circuit(
             nodeA = floor0.perimeterNode(NodeSide.N),
             nodeB = null,
-            blocks = emptyList(),
+            segments = emptyList(),
             errors = listOf(ConnectionError.CIRCUIT_TO_CLOSED_NODE),
         )
 
@@ -80,7 +80,7 @@ class CircuitTest {
         val circuit = Circuit(
             nodeA = floor0.perimeterNode(NodeSide.N),
             nodeB = null,
-            blocks = emptyList(),
+            segments = emptyList(),
         )
 
         assertEquals(null, circuit.owner)
@@ -95,8 +95,8 @@ class CircuitTest {
         val n1 = tower.floors[0].perimeterNode(NodeSide.N)
         val n2 = tower.floors[1].perimeterNode(NodeSide.S)
 
-        val circuit1 = Circuit(nodeA = n1, nodeB = n2, blocks = emptyList())
-        val circuit2 = Circuit(nodeA = n2, nodeB = n1, blocks = emptyList())
+        val circuit1 = Circuit(nodeA = n1, nodeB = n2, segments = emptyList())
+        val circuit2 = Circuit(nodeA = n2, nodeB = n1, segments = emptyList())
 
         assertEquals(circuit1, circuit2)
         assertEquals(circuit1.hashCode(), circuit2.hashCode())
@@ -112,7 +112,7 @@ class CircuitTest {
 
         val nodeA = floor0.perimeterNode(NodeSide.N)
         val nodeB = floor1.perimeterNode(NodeSide.S)
-        val circuit = Circuit(nodeA = nodeA, nodeB = nodeB, blocks = emptyList())
+        val circuit = Circuit(nodeA = nodeA, nodeB = nodeB, segments = emptyList())
         nodeA.connections += circuit
         nodeB.connections += circuit
 
@@ -132,7 +132,7 @@ class CircuitTest {
         val danglingCircuit = Circuit(
             nodeA = floor0.perimeterNode(NodeSide.N),
             nodeB = null,
-            blocks = emptyList(),
+            segments = emptyList(),
             errors = listOf(ConnectionError.CIRCUIT_TO_CLOSED_NODE),
         )
         floor0.perimeterNode(NodeSide.N).connections += danglingCircuit

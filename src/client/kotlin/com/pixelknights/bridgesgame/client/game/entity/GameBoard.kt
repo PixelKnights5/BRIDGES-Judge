@@ -215,16 +215,11 @@ class GameBoard(
         // Report bridges that connect to/from a closed node
         bridges
             .filter { ConnectionError.BRIDGE_TO_CLOSED_NODE in it.errors }
-            .distinctBy { it.blocks.toSet() }
+            .distinctBy { it.segments }
             .forEach { bridge ->
                 val team = bridge.owner ?: bridge.painter ?: return@forEach
                 errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) connects to a closed node"
-                val centerPos = BlockPos(
-                    bridge.blocks.map { it.x }.average().toInt(),
-                    bridge.nodeA.worldPosition.y,
-                    bridge.blocks.map { it.z }.average().toInt(),
-                )
-                warnings += WarningIcon(centerPos, Color.fromHex(team.rgba))
+                warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
             }
 
         // Report bridges that belong to a team but are not reachable from their home base
@@ -236,10 +231,7 @@ class GameBoard(
                 .filter { it !in path.connections }
                 .forEach { bridge ->
                     errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base"
-                    val midX = (bridge.nodeA.worldPosition.x + (bridge.nodeB?.worldPosition?.x ?: bridge.nodeA.worldPosition.x)) / 2
-                    val midY = maxOf(bridge.nodeA.worldPosition.y, bridge.nodeB?.worldPosition?.y ?: bridge.nodeA.worldPosition.y)
-                    val midZ = (bridge.nodeA.worldPosition.z + (bridge.nodeB?.worldPosition?.z ?: bridge.nodeA.worldPosition.z)) / 2
-                    warnings += WarningIcon(BlockPos(midX, midY, midZ), Color.fromHex(team.rgba))
+                    warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
                 }
         }
     }

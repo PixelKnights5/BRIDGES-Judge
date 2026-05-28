@@ -2,11 +2,13 @@ package com.pixelknights.bridgesgame.client.game.entity.scanner
 
 import com.pixelknights.bridgesgame.client.game.entity.Circuit
 import com.pixelknights.bridgesgame.client.game.entity.ConnectionError
+import com.pixelknights.bridgesgame.client.game.entity.ConnectionSegment
 import com.pixelknights.bridgesgame.client.game.entity.Node
 import net.minecraft.block.Block
 import net.minecraft.block.Blocks
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Direction
 
 class CircuitScanner(private val mc: MinecraftClient) {
 
@@ -60,7 +62,7 @@ class CircuitScanner(private val mc: MinecraftClient) {
             Circuit(
                 nodeA = node,
                 nodeB = endNode,
-                blocks = visited.toList(),
+                segments = blocksToSegments(visited.toList()),
                 errors = errors,
             ),
         )
@@ -87,5 +89,27 @@ class CircuitScanner(private val mc: MinecraftClient) {
 
         private fun BlockPos.adjacentFaceNeighbors(): List<BlockPos> =
             listOf(north(), south(), east(), west(), up(), down())
+
+        fun blocksToSegments(blocks: List<BlockPos>): List<ConnectionSegment> {
+            val blockSet = blocks.toSet()
+            val segments = mutableListOf<ConnectionSegment>()
+            for (dir in listOf(Direction.EAST, Direction.UP, Direction.SOUTH)) {
+                for (block in blocks) {
+                    if (block.offset(dir.opposite) in blockSet) {
+                        continue  // not the start of a run
+                    }
+                    val next = block.offset(dir)
+                    if (next !in blockSet) {
+                        continue  // no neighbor in this direction
+                    }
+                    var end = next
+                    while (end.offset(dir) in blockSet) {
+                        end = end.offset(dir)
+                    }
+                    segments += ConnectionSegment(block, end)
+                }
+            }
+            return segments
+        }
     }
 }

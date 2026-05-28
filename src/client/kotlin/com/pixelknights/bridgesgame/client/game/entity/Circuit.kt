@@ -6,12 +6,18 @@ import java.util.Objects
 data class Circuit(
     override val nodeA: Node,
     override val nodeB: Node?,
-    override val blocks: List<BlockPos>,
+    override val segments: List<ConnectionSegment>,
     override val errors: List<ConnectionError> = emptyList(),
 ) : Connection {
 
     override val owner: GameColor? = null
     override val painter: GameColor? = null
+    override val midpoint: BlockPos = if (segments.isEmpty()) {
+        nodeA.worldPosition
+    } else {
+        segments[segments.size / 2].start
+    }
+
 
     override fun canTeamUse(team: GameColor): Boolean = nodeB != null
 
