@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:maven.fabricmc.net)",
+      "Bash(./gradlew build *)",
+      "WebFetch(domain:docs.fabricmc.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "WebFetch(domain:mappings.dev)",
+      "WebFetch(domain:fabricmc.net)",
+      "WebFetch(domain:wiki.fabricmc.net)",
+      "Bash(./gradlew compileClientKotlin)",
+      "Bash(grep -E \"\\\\.kt$\")",
+      "Bash(./gradlew test *)",
+      "Bash(grep -v \"\\\\-\\\\-$\")",
+      "Bash(grep -v \"{$\")",
+      "Bash(grep -i \"\\\\.kt$\")",
+      "mcp__idea__find_files_by_name_keyword",
+      "mcp__idea__search_in_files_by_text",
+      "mcp__idea__read_file",
+      "mcp__idea__list_directory_tree",
+      "mcp__idea__get_file_text_by_path"
+    ]
+  }
+}

@@ -91,8 +91,12 @@ class BridgeTemplate(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is BridgeTemplate) return false
+        if (this === other) {
+            return true
+        }
+        if (other !is BridgeTemplate) {
+            return false
+        }
 
         // This intentionally does not check targetNodeOffset so that bridges in the opposite direction are
         // because bridges are not directed.

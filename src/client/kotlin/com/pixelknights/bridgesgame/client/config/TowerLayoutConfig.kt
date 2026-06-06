@@ -45,7 +45,12 @@ class TowerLayoutConfig(
                 it.key contentEquals arrayOf(row, col)
             }
             .any()
+    }
 
+    fun getBasePositions(): Map<GameColor, Pair<Int, Int>> {
+        return baseMap.entries.associate { (position, color) ->
+            color to (position[0] to position[1])
+        }
     }
 
     private fun loadColorMap() {
@@ -58,6 +63,7 @@ class TowerLayoutConfig(
 
         for ((row, line) in resource.get().reader.lines().iterator().withIndex()) {
             val tmp = line.split(' ')
+                .filter { it.isNotEmpty() }
                 .mapIndexed { col, code ->
                     val color = GameColor.fromChar(code)
                     if (color != null && color.colorCode.uppercase() == code) {
@@ -81,6 +87,7 @@ class TowerLayoutConfig(
 
         for (line in resource.get().reader.lines().iterator()) {
             val tmp = line.split(' ')
+                .filter { it.isNotEmpty() }
                 .map { height ->
                     if (height == ".") {
                         return@map null

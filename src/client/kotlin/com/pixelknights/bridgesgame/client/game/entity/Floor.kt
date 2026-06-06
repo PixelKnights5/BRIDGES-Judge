@@ -4,7 +4,6 @@ import net.minecraft.util.math.BlockPos
 
 data class Floor (
     val floorNumber: Int,
-    val hasLadder: Boolean,
     val tower: Tower,
     /**
      * The location at node/ladder level, not ground level
@@ -12,6 +11,7 @@ data class Floor (
     val worldCenter: BlockPos,
     val captureColor: GameColor? = null,
     val paintColor: GameColor? = null,
+    val blockingTeamColor: GameColor? = null,
     val isBase: Boolean,
 ) {
 
@@ -20,6 +20,9 @@ data class Floor (
 
     val isPainted: Boolean
         get() = paintColor != null
+
+    val isBlocked: Boolean
+        get() = blockingTeamColor != null
 
     val owner: GameColor?
         get() = paintColor ?: captureColor

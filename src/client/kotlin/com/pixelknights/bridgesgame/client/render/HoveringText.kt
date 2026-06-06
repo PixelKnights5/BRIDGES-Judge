@@ -3,7 +3,7 @@ package com.pixelknights.bridgesgame.client.render
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.util.minus
 import com.pixelknights.bridgesgame.client.util.toVector3f
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.render.LightmapTextureManager
@@ -58,8 +58,7 @@ class HoveringTextRenderer(
 
     fun renderText(context: WorldRenderContext, text: TextLine, pos: Vector3f) {
         val matrix = Matrix4f()
-        val camera = context.camera()
-        val cameraPos = camera.pos.toVector3f()
+        val cameraPos = context.worldState().cameraRenderState.pos.toVector3f()
         val vertexConsumers = context.consumers() ?: return
         val textRenderer = mc.textRenderer
 

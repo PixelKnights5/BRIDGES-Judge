@@ -5,7 +5,6 @@ import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
 import com.pixelknights.bridgesgame.client.util.plus
 import com.pixelknights.bridgesgame.client.util.times
-import net.minecraft.block.Blocks
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.Logger
@@ -27,18 +26,17 @@ class FloorScanner(
 
         val worldCenterPosition = worldFloorPosition.up(blocksBetweenFloors / 2)
 
-        val hasLadder = (mc.world?.getBlockState(worldCenterPosition)?.block == Blocks.LADDER)
-
         val claimingTeam = getCapturingTeam(worldFloorPosition)
         val paintingTeam = getCapturingTeam(worldFloorPosition.up())
+        val blockingTeam = getBlockingTeam(worldCenterPosition)
 
         val floor = Floor(
             floorNumber = floorNum,
-            hasLadder = hasLadder,
             tower = tower,
             worldCenter = worldCenterPosition,
             captureColor = paintingTeam ?: claimingTeam,
             paintColor = paintingTeam,
+            blockingTeamColor = blockingTeam,
             isBase = tower.isBase && floorNum == 0
         )
         floor.nodes = NodeSide.entries.map { side -> getNode(floor, side) }.toList()
@@ -47,14 +45,37 @@ class FloorScanner(
 
     private fun getNode(floor: Floor, side: NodeSide): Node {
         val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
-        val isOpen = mc.world?.getBlockState(worldCoords)?.isAir
+        // CENTER is the tower interior — not a valid bridge endpoint
+        val isOpen = if (side == NodeSide.CENTER) false else mc.world?.getBlockState(worldCoords)?.isAir ?: false
 
         return Node(
             side = side,
-            isOpen = isOpen ?: false,
+            isOpen = isOpen,
             floor = floor,
             worldPosition = worldCoords,
         )
+    }
+
+    /**
+     * Scans all node positions on this floor to detect if a team has blocked it.
+     * Blocked nodes contain team glass placed directly at the node world position.
+     * Blocked nodes are non-air, so isOpen=false falls out automatically — the existing
+     * BRIDGE_TO_CLOSED_NODE path handles bridges into them without additional logic.
+     */
+    private fun getBlockingTeam(worldCenter: BlockPos): GameColor? {
+        val teamColors = NodeSide.entries
+            .filter { it != NodeSide.CENTER }
+            .mapNotNull { side ->
+                val nodePos = worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
+                getTeamColorForBlock(mc.world?.getBlockState(nodePos)?.block)
+            }.toSet()
+
+        if (teamColors.size > 1) {
+            logger.warn("The floor centered at ($worldCenter) has glass from multiple teams in node positions.")
+            return null
+        }
+
+        return teamColors.firstOrNull()
     }
 
     /**

@@ -4,30 +4,30 @@ import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import com.pixelknights.bridgesgame.client.di.Channels
+import com.pixelknights.bridgesgame.client.di.Scopes
+import com.pixelknights.bridgesgame.client.game.ScanState
 import com.pixelknights.bridgesgame.client.game.entity.GameBoard
 import com.pixelknights.bridgesgame.client.game.entity.GameColor
-import com.pixelknights.bridgesgame.client.render.DotRenderer
-import com.pixelknights.bridgesgame.client.render.LineRenderer
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
-import net.minecraft.util.math.BlockPos
+import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
-import java.util.concurrent.BlockingQueue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
-class JudgeGameCommand (
+class JudgeGameCommand(
     private val gameBoard: GameBoard,
-    private val dotRenderer: DotRenderer,
-    private val lineRenderer: LineRenderer,
 ) : Command<FabricClientCommandSource>, KoinComponent {
 
     private val mc: MinecraftClient by inject()
     private val config: ModConfig by inject()
-    private val errorChannel: BlockingQueue<String> by inject<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel))
+    private val logger: Logger by inject()
+    private val scanState: ScanState by inject()
+    private val scanScope: CoroutineScope by inject(named(Scopes.BridgesScanScope))
 
     override fun run(ctx: CommandContext<FabricClientCommandSource>): Int {
         val action = StringArgumentType.getString(ctx, "action")
@@ -45,30 +45,43 @@ class JudgeGameCommand (
     }
 
     private fun handleScanAction(ctx: CommandContext<FabricClientCommandSource>): Int {
-        val centerPosition = config.playerSettings.centerCoordinate
-
-        dotRenderer.dotsToRender.clear()
-        lineRenderer.linesToRender.clear()
-
-        gameBoard.scanGame(centerPosition)
-
-        var numErrors = 0
-        errorChannel.forEach {
-            numErrors++
-            ctx.source.sendError(Text.of("WARNING: $it"))
+        if (!scanState.isScanning.compareAndSet(false, true)) {
+            ctx.source.sendError(Text.of("A scan is already in progress."))
+            return -1
         }
-        errorChannel.clear()
 
-        ctx.source.sendFeedback(getScoreText())
-
-        if(numErrors > 0) {
-            ctx.source.sendError(Text.of("$numErrors warnings detected (see above scores)"))
+        val centerPosition = config.playerSettings.centerCoordinate
+        scanScope.launch {
+            try {
+                val result = gameBoard.scanGame(centerPosition)
+                mc.execute {
+                    if (mc.player == null) {
+                        logger.warn("Player disconnected before scan result could be applied")
+                        return@execute
+                    }
+                    gameBoard.applyScanResult(result)
+                    result.errors.forEach { ctx.source.sendError(Text.of("WARNING: $it")) }
+                    ctx.source.sendFeedback(getScoreText())
+                    if (result.errors.isNotEmpty()) {
+                        ctx.source.sendError(Text.of("${result.errors.size} warnings detected (see above scores)"))
+                    }
+                }
+            } catch (t: Throwable) {
+                logger.error("Scan failed", t)
+                mc.execute { ctx.source.sendError(Text.of("Scan failed: ${t.message}")) }
+            } finally {
+                scanState.isScanning.set(false)
+            }
         }
 
         return 0
     }
 
     fun handleClearAction(ctx: CommandContext<FabricClientCommandSource>): Int {
+        if (scanState.isScanning.get()) {
+            ctx.source.sendError(Text.of("Cannot clear while a scan is in progress."))
+            return -1
+        }
         gameBoard.resetGame()
         ctx.source.sendFeedback(Text.of("Game state cleared"))
         return 0
@@ -87,7 +100,6 @@ class JudgeGameCommand (
         return 0
     }
 
-
     private fun handlePathLineVisibility(ctx: CommandContext<FabricClientCommandSource>, isVisible: Boolean): Int {
         config.playerSettings.showBridgePaths = isVisible
         config.save()
@@ -102,14 +114,14 @@ class JudgeGameCommand (
     }
 
     private fun handleSetCenterTowerAction(ctx: CommandContext<FabricClientCommandSource>): Int {
-        val playerPosition = mc.player?.pos
+        val playerPosition = mc.player?.blockPos
 
         if (playerPosition == null) {
             ctx.source.sendError(Text.of("Player position is null"))
             return -1
         }
 
-        config.playerSettings.centerCoordinate = BlockPos.ofFloored(playerPosition)
+        config.playerSettings.centerCoordinate = playerPosition
         config.save()
         val coordinate = config.playerSettings.centerCoordinate
         ctx.source.sendFeedback(Text.of("Center tower coordinates set to: (${coordinate.x}, ${coordinate.y}, ${coordinate.z})"))
@@ -121,7 +133,7 @@ class JudgeGameCommand (
         // https://minecraft.fandom.com/wiki/Formatting_codes
         val results = """
 
-            §l§nBRIDGES Scores:§r 
+            §l§nBRIDGES Scores:§r
             §l§cRed:
                 Towers: ${gameBoard.teams[GameColor.RED]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.RED]?.points ?: "N/A"}
@@ -140,13 +152,13 @@ class JudgeGameCommand (
                 Moves: ${gameBoard.teams[GameColor.GREEN]?.moves ?: "N/A"} §r
             §l§dMagenta:
                 Towers: ${gameBoard.teams[GameColor.MAGENTA]?.capturedTowers ?: "N/A"}
-                Points: ${gameBoard.teams[GameColor.MAGENTA]?.points ?: "N/A"} 
+                Points: ${gameBoard.teams[GameColor.MAGENTA]?.points ?: "N/A"}
                 Moves: ${gameBoard.teams[GameColor.MAGENTA]?.moves ?: "N/A"} §r
             §l§6Orange:
                 Towers: ${gameBoard.teams[GameColor.ORANGE]?.capturedTowers ?: "N/A"}
-                Points: ${gameBoard.teams[GameColor.ORANGE]?.points ?: "N/A"} 
+                Points: ${gameBoard.teams[GameColor.ORANGE]?.points ?: "N/A"}
                 Moves: ${gameBoard.teams[GameColor.ORANGE]?.moves ?: "N/A"} §r
-                
+
         """.trimIndent()
         return Text.literal(results)
     }

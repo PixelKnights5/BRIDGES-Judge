@@ -1,118 +1,169 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import com.pixelknights.bridgesgame.client.di.Channels
+import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
+import com.pixelknights.bridgesgame.client.game.entity.scanner.CircuitScanner
+import com.pixelknights.bridgesgame.client.game.entity.scanner.LadderScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.*
 import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.world.ClientWorld
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3i
 import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.qualifier.named
-import java.util.concurrent.BlockingQueue
-import kotlin.getValue
 
 class GameBoard(
     private val towerScanner: TowerScanner,
     private val bridgeScanner: BridgeScanner,
+    private val ladderScanner: LadderScanner,
+    private val circuitScanner: CircuitScanner,
     private val dotRenderer: DotRenderer,
     private val lineRenderer: LineRenderer,
     private val config: ModConfig,
     private val mc: MinecraftClient,
     private val logger: Logger,
     private val textRenderer: HoveringTextRenderer,
+    private val warningIconRenderer: WarningIconRenderer,
 ) : KoinComponent {
 
-    private var towers: MutableList<MutableList<Tower>> = mutableListOf<MutableList<Tower>>()
-    private var bridges: MutableSet<Bridge> = mutableSetOf()
-    private val paths: MutableList<Path> = mutableListOf()
-    private val errorChannel: BlockingQueue<String> by inject<BlockingQueue<String>>(named(Channels.MultipleBridgeDetectedErrorChannel))
+    private val layoutConfig: TowerLayoutConfig by inject()
+    private val towerScoring: TowerScoring by lazy { TowerScoring(layoutConfig.getBasePositions()) }
 
+    private var towers: MutableList<MutableList<Tower>> = mutableListOf()
+    private var bridges: MutableSet<Bridge> = mutableSetOf()
+    private var ladders: MutableSet<Ladder> = mutableSetOf()
+    private var circuits: MutableSet<Circuit> = mutableSetOf()
+    private val paths: MutableList<Path> = mutableListOf()
     val teams: MutableMap<GameColor, Team> = mutableMapOf()
 
-
-    fun scanGame(centerCoordinate: BlockPos) {
-        resetGame()
-
-        teams += GameColor.entries.associate { color ->
+    /**
+     * Scans the game board and returns all computed state as a [ScanResult].
+     * Safe to call from a background thread — only reads world state, writes nothing to GameBoard
+     * or renderer fields. Call [applyScanResult] on the client thread to commit the result.
+     */
+    fun scanGame(centerCoordinate: BlockPos): ScanResult {
+        val localTeams: MutableMap<GameColor, Team> = GameColor.entries.associate { color ->
             color to Team().apply { baseColor = color }
-        }
+        }.toMutableMap()
 
-        towers = towerScanner.getTowers(centerCoordinate)
+        val localTowers = towerScanner.getTowers(centerCoordinate)
 
-//        val centerTower = towers[9][9]
-//        val position = centerTower.worldCoordinates(centerCoordinate, config) + Vec3i(1, 100, 1)
-//        println("position = $position")
-//        textRenderer.textToRender += HoveringText(position)
-//            .addLine("§nCenter Tower§r", Color.BLUE)
-//            .addLine("Another Line", Color.RED)
-//            .addLine("Another Line Again", Color.GREEN)
-
-        // Get a mapping from floorNum -> every node on that floor
-        val nodeMap = towers
+        val nodeMap = localTowers
             .asSequence()
             .flatten()
             .flatMap { it.floors }
             .flatMap { it.nodes }
             .toList()
 
-
+        val localBridges = mutableSetOf<Bridge>()
         nodeMap.forEach { node ->
-            bridges += bridgeScanner.getBridgesForNode(node, nodeMap)
+            localBridges += bridgeScanner.getBridgesForNode(node, nodeMap)
         }
 
-        connectBridges()
-        calculateScores()
-        createDebugLines()
-        createTowerStatsText(towers.flatten().toList(), centerCoordinate)
+        val localLadders = mutableSetOf<Ladder>()
+        localLadders += localTowers.flatten().flatMap { ladderScanner.getLaddersForTower(it) }
+
+        val localCircuits = mutableSetOf<Circuit>()
+        nodeMap.forEach { node ->
+            localCircuits += circuitScanner.getCircuitsForNode(node, nodeMap)
+        }
+
+        val allConnections: Set<Connection> = localBridges + localLadders + localCircuits
+        allConnections.forEach { connection ->
+            connection.nodeA.connections += connection
+            connection.nodeB?.connections += connection
+        }
+
+        val localErrors = mutableListOf<String>()
+        val localPaths = mutableListOf<Path>()
+        val localWarnings = mutableListOf<WarningIcon>()
+
+        calculateScores(
+            towers = localTowers,
+            bridges = localBridges,
+            connections = allConnections,
+            paths = localPaths,
+            teams = localTeams,
+            errors = localErrors,
+            warnings = localWarnings,
+        )
+
+        val localLinesToRender = mutableListOf<RenderedLine>()
+        val localDotsToRender = mutableListOf<RenderedDot>()
+        mc.world?.let { world ->
+            localPaths.forEach { path ->
+                val lines = path.createRenderedLines(world, config)
+                localLinesToRender += lines
+                localDotsToRender += lines.flatMap { it.dots }
+            }
+        }
+
+        val localTextsToRender = buildTowerStatsText(localTowers.flatten().toList(), centerCoordinate)
+
+        return ScanResult(
+            towers = localTowers,
+            bridges = localBridges,
+            ladders = localLadders,
+            circuits = localCircuits,
+            paths = localPaths,
+            teams = localTeams,
+            linesToRender = localLinesToRender,
+            dotsToRender = localDotsToRender,
+            textsToRender = localTextsToRender,
+            warnings = localWarnings,
+            errors = localErrors,
+        )
+    }
+
+    /**
+     * Applies a completed [ScanResult] to GameBoard state and all renderer collections.
+     * Must be called on the Minecraft client thread.
+     */
+    fun applyScanResult(result: ScanResult) {
+        towers = result.towers
+        bridges = result.bridges
+        ladders = result.ladders
+        circuits = result.circuits
+        paths.clear()
+        paths += result.paths
+        teams.clear()
+        teams += result.teams
+
+        lineRenderer.linesToRender.clear()
+        lineRenderer.linesToRender += result.linesToRender
+        dotRenderer.dotsToRender.clear()
+        dotRenderer.dotsToRender += result.dotsToRender
+        textRenderer.textToRender.clear()
+        textRenderer.textToRender += result.textsToRender
+        warningIconRenderer.warnings.clear()
+        warningIconRenderer.warnings += result.warnings
     }
 
     fun resetGame() {
         bridges.clear()
+        ladders.clear()
+        circuits.clear()
         paths.clear()
         teams.clear()
         towers.clear()
         lineRenderer.linesToRender.clear()
         dotRenderer.dotsToRender.clear()
         textRenderer.textToRender.clear()
+        warningIconRenderer.warnings.clear()
     }
 
-    fun createDebugLines() {
-        // TODO: Consider moving this to a separate class
-
-        paths.forEach { path ->
-            val lines = path.createDebugLines(mc.world!!, config)
-            lineRenderer.linesToRender += lines
-            dotRenderer.dotsToRender += lines.flatMap { it.dots }
-        }
-
-    }
-
-    private fun connectBridges() {
-        bridges.forEach { bridge ->
-            val startNode = bridge.startNode
-            val endNode = bridge.endNode
-
-            startNode.connectedBridges += bridge
-            endNode?.connectedBridges += bridge
-
-            // Draw debug lines/dots
-//            if (endNode != null) {
-//                val line = DebugLine(startNode.worldCoords, endNode.worldCoords, Color.fromHex(bridge.owner?.rgba ?: 0))
-//                lineRenderer.linesToRender += line
-//                dotRenderer.dotsToRender += line.dots
-//            } else {
-//                dotRenderer.dotsToRender += DebugDot(startNode.worldCoords, Color.WHITE, 0f)
-//            }
-        }
-    }
-
-    private fun calculateScores() {
+    private fun calculateScores(
+        towers: List<List<Tower>>,
+        bridges: Set<Bridge>,
+        connections: Set<Connection>,
+        paths: MutableList<Path>,
+        teams: MutableMap<GameColor, Team>,
+        errors: MutableList<String>,
+        warnings: MutableList<WarningIcon>,
+    ) {
         logger.info("Validating game...")
 
         val world = mc.world
@@ -121,11 +172,12 @@ class GameBoard(
             return
         }
 
-        // TODO: generate paths for disconnected bridge networks
-        buildTeamPaths()
-        validateTowerCaptures(world)
+        buildTeamPaths(towers, paths, errors)
 
-        // Calculate scores
+        towers.flatten().forEach { tower ->
+            tower.setCapturingTeam(world, config)
+        }
+
         paths.forEach { path ->
             if (path.pathOwner != null) {
                 val numCapturedTowers = towers
@@ -140,14 +192,15 @@ class GameBoard(
 
         // Calculate moves
         teams.forEach { (teamColor, team) ->
-            val numBridgeClaims = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.owner == teamColor }
-            val numBridgePaints = bridges.filter { BridgeError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
+            val numBridgeClaims = bridges.filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.owner == teamColor }
+            val numBridgePaints = bridges.filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
             val floorClaims = towers.flatten().flatMap { it.floors }.count { it.captureColor == teamColor }
             val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
+            val floorBlocks = towers.flatten().flatMap { it.floors }.count { it.blockingTeamColor == teamColor }
             val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }
             // Scrapes should be added here, but the mod has no "memory" of previous days so this is not possible to count.
 
-            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + towerClaims
+            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + towerClaims
         }
 
         logger.info("Teams = $teams")
@@ -159,28 +212,92 @@ class GameBoard(
             .flatMap { it.floors }
             .filter { (it.isCaptured && it.isCaptureValidated != true) || (it.isPainted && it.isPaintValidated != true) }
             .forEach {
-                if(it.isCaptured && it.isCaptureValidated != true) {
-                    errorChannel += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.captureColor} network"
+                if (it.isCaptured && it.isCaptureValidated != true) {
+                    errors += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.captureColor} network"
                 }
-                if(it.isPainted && it.isPaintValidated != true) {
-                    errorChannel += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network"
+                if (it.isPainted && it.isPaintValidated != true) {
+                    errors += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network"
                 }
             }
 
-        //TODO: report bridge errors
-    }
+        // Report floors blocked by a team that does not own them
+        towers
+            .asSequence()
+            .flatten()
+            .flatMap { it.floors }
+            .filter { it.isBlocked && it.blockingTeamColor != it.owner }
+            .forEach {
+                errors += "Floor ${it.coords} ${it.worldCoords} blocked by ${it.blockingTeamColor} but owned by ${it.owner ?: "no team"}"
+                warnings += WarningIcon(it.worldCenter, Color.fromHex(it.blockingTeamColor!!.rgba))
+            }
 
-    /**
-     * Validate tower captures.
-     * Must be called AFTER paths are generated
-     */
-    private fun validateTowerCaptures(world: ClientWorld) {
-        towers.flatten().forEach { tower ->
-            tower.setCapturingTeam(world, config)
+        // Report bridges that connect to/from a closed node
+        bridges
+            .filter { ConnectionError.BRIDGE_TO_CLOSED_NODE in it.errors }
+            .distinctBy { it.segments }
+            .forEach { bridge ->
+                val team = bridge.owner ?: bridge.painter ?: return@forEach
+                errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) connects to a closed node"
+                warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
+            }
+
+        // Report bridges that belong to a team but are not reachable from their home base
+        paths.forEach { path ->
+            val team = path.pathOwner ?: return@forEach
+            bridges
+                .filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }
+                .filter { it.owner == team || it.painter == team }
+                .filter { it !in path.connections }
+                .forEach { bridge ->
+                    errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base"
+                    warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
+                }
+        }
+
+        // Report connections that physically cross each other
+        ConnectionValidator.findIntersections(connections).forEach { (a, b, point) ->
+            errors += "Connection ${a.nodeA.coords}-${a.nodeB?.coords ?: "?"} intersects ${b.nodeA.coords}-${b.nodeB?.coords ?: "?"}"
+            warnings += WarningIcon(warningPosition(point, a, b), Color.WHITE)
+        }
+
+        // Report nodes with more than one connection (excluding ladder-only nodes)
+        ConnectionValidator.findOverloadedNodes(connections).forEach { node ->
+            errors += "Node ${node.coords} has multiple connections attached"
+            node.connections
+                .filter { it !is Ladder }
+                .forEach { connection ->
+                    val isCircuit = connection is Circuit
+                    val team = if (isCircuit) null else connection.owner ?: connection.painter
+                    val color = if (team != null) Color.fromHex(team.rgba) else Color.WHITE
+                    warnings += WarningIcon(warningPosition(connection.midpoint, connection), color)
+                }
         }
     }
 
-    private fun createTowerStatsText(towerList: List<Tower>, centerCoordinate: BlockPos) {
+    private fun buildTeamPaths(
+        towers: List<List<Tower>>,
+        paths: MutableList<Path>,
+        errors: MutableList<String>,
+    ) {
+        paths += GameColor.entries
+            .filter { it.isTeam }
+            .map { team -> Path(team, towerScoring) }
+            .toList()
+
+        val allTowers = towers.asSequence().flatten()
+
+        paths.forEach { path ->
+            val baseFloor = allTowers
+                .filter { tower -> tower.color == path.pathOwner && tower.isBase }
+                .flatMap { tower -> tower.floors }
+                .first { floor -> floor.isBase }
+
+            path.buildPath(baseFloor, allTowers.toList(), errors)
+        }
+    }
+
+    private fun buildTowerStatsText(towerList: List<Tower>, centerCoordinate: BlockPos): List<HoveringText> {
+        val result = mutableListOf<HoveringText>()
         for (tower in towerList) {
             if (tower.capturingTeam == null && tower.floors.all { it.captureColor == null }) {
                 continue
@@ -195,52 +312,36 @@ class GameBoard(
                 textBlock.addLine("Tower not captured", Color.WHITE)
             } else {
                 val color = Color.fromHex(tower.capturingTeam!!.rgba)
-                val pointValue = tower.getCapturePoints(tower.capturingTeam!!)
+                val pointValue = towerScoring.getCapturePoints(tower.capturingTeam!!, tower.color)
                 textBlock.addLine("Tower captured by: ${tower.capturingTeam} (+${pointValue})", color)
             }
 
-            textBlock.addLine("§nFloors:", Color.WHITE)
             tower.floors
-                .groupBy { it.owner }.forEach { team, groupFloors ->
+                .groupBy { it.owner }
+                .forEach { team, groupFloors ->
                     val floorNumbers = groupFloors.map { it.floorNumber + 1 }
                     if (team == null) {
                         textBlock.addLine("Uncaptured floors: $floorNumbers", Color.WHITE)
                     } else {
-                        textBlock.addLine("Team $team captured: $floorNumbers", Color.fromHex(team.rgba))
+                        val blockedNumbers = groupFloors.filter { it.blockingTeamColor == team }.map { it.floorNumber + 1 }
+                        val blockedSuffix = if (blockedNumbers.isNotEmpty()) " and blocked $blockedNumbers" else ""
+                        textBlock.addLine("Team $team captured $floorNumbers$blockedSuffix", Color.fromHex(team.rgba))
                     }
                 }
+
             val unvalidatedFloors = tower.floors.filter { it.owner != null && !it.isOwnerValidated }.toList()
-            if (!unvalidatedFloors.isEmpty()) {
+            if (unvalidatedFloors.isNotEmpty()) {
                 textBlock.addLine("⚠ Disconnected Floors: ${unvalidatedFloors.map { it.floorNumber + 1 }.toList()} ⚠", Color.WHITE)
             }
 
-
-            textRenderer.textToRender.add(textBlock)
+            result += textBlock
         }
-
+        return result
     }
 
-    /**
-     * Generate paths starting from the base tower for each team
-     */
-    private fun buildTeamPaths() {
-        paths += GameColor.entries
-            .filter { it.isTeam }
-            .map { team -> Path(team) }
-            .toList()
-
-        val allTowers = towers.asSequence().flatten()
-
-        paths.forEach { path ->
-
-            val baseFloor = allTowers
-                .filter { tower -> tower.color == path.pathOwner && tower.isBase }
-                .flatMap { tower -> tower.floors }
-                .first { floor -> floor.isBase }
-
-            path.buildPath(baseFloor, allTowers.toList(), errorChannel)
-        }
+    // Circuit segments run through solid blocks, so shift the icon up one block to stay visible.
+    private fun warningPosition(pos: BlockPos, vararg connections: Connection): BlockPos {
+        return if (connections.any { it is Circuit }) pos.up() else pos
     }
 
 }
-

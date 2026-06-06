@@ -2,18 +2,20 @@ package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.render.Color
-import com.pixelknights.bridgesgame.client.render.DebugLine
+import com.pixelknights.bridgesgame.client.render.RenderedLine
 import com.pixelknights.bridgesgame.client.util.plus
+import com.pixelknights.bridgesgame.client.util.randomFloat
 import net.minecraft.block.LadderBlock
 import net.minecraft.util.math.Direction
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
-import java.util.concurrent.BlockingQueue
 
 
 class Path (
     val pathOwner: GameColor?,
+    private val scoring: TowerScoring,
 ) {
-    val bridges: MutableSet<Bridge> = mutableSetOf()
+    val connections: MutableSet<Connection> = mutableSetOf()
     val floors: MutableSet<Floor> = mutableSetOf()
 
     fun containsBaseFloor(startingFloor: Floor): Boolean {
@@ -33,7 +35,7 @@ class Path (
             .toSet()
         val capturedTowerPoints = towers.sumOf { tower ->
             when (tower.capturingTeam) {
-                pathOwner -> tower.getCapturePoints(pathOwner)
+                pathOwner -> scoring.getCapturePoints(pathOwner, tower.color)
                 else -> 0
             }
         }
@@ -42,10 +44,10 @@ class Path (
     }
 
     /**
-     * Build a bridge network and validate floors along the way.
-     * The [startingFloor] must already be connected to the existing path
+     * Build a connection network and validate floors along the way.
+     * The [startingFloor] must already be connected to the existing path.
      */
-    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errorChannel: BlockingQueue<String>) {
+    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errors: MutableList<String>) {
         if (startingFloor in floors) {
             return
         }
@@ -60,111 +62,80 @@ class Path (
 
         floors += startingFloor
 
-        // Take ladders going up
-        if (startingFloor.hasLadder) {
-            val aboveFloor = allTowers
-                .asSequence()
-                .filter { it == startingFloor.tower }
-                .flatMap { it.floors }
-                .first { it.floorNumber == startingFloor.floorNumber + 1 }
-
-            buildPath(aboveFloor, allTowers, errorChannel)
-        }
-
-        // Take ladders going down
-        val belowFloor = allTowers
-            .asSequence()
-            .filter { it == startingFloor.tower }
-            .flatMap { it.floors }
-            .firstOrNull { it.floorNumber == startingFloor.floorNumber - 1 }
-
-        if (belowFloor?.hasLadder == true) {
-            buildPath(belowFloor, allTowers, errorChannel)
-        }
-
-        // Take all usable bridges
         for (node in startingFloor.nodes) {
-            var nextBridge: Bridge? = null
+            var nextConnection: Connection?
 
-            if (node.connectedBridges.size > 1) {
+            if (node.connections.size > 1) {
                 // Choose the path that is most beneficial to the team and invalidate the others
-                val allOptions = node.connectedBridges
+                val allOptions = node.connections
                     .filter { it.errors.isEmpty() }
-                    .associate { bridge ->
-                    val pathOption = Path(this.pathOwner).also { copy ->
-                        copy.bridges += (this.bridges + bridge)
+                    .associate { connection ->
+                    val pathOption = Path(this.pathOwner, scoring).also { copy ->
+                        copy.connections += (this.connections + connection)
                         copy.floors += (this.floors + startingFloor)
                     }
-                    if (bridge.endNode != null) {
-                        pathOption.buildPath(bridge.endNode.floor, allTowers, errorChannel)
-                        pathOption.buildPath(bridge.startNode.floor, allTowers, errorChannel)
-                        return@associate bridge to pathOption
+                    val endNode = connection.nodeB
+                    if (endNode != null) {
+                        pathOption.buildPath(endNode.floor, allTowers, errors)
+                        pathOption.buildPath(connection.nodeA.floor, allTowers, errors)
+                        return@associate connection to pathOption
                     } else {
-                        return@associate bridge to null
+                        return@associate connection to null
                     }
                 }
                 if (allOptions.size > 1) {
-                    errorChannel += "Node ${node.coords} ${node.worldCoords} has multiple bridges"
+                    errors += "Node ${node.coords} ${node.worldCoords} has multiple connections"
                 }
 
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
-                nextBridge = bestOption.key
-                
-                // TODO: Send error event for each illegal unused bridge. 
+                nextConnection = bestOption.key
+
+                // TODO: Send error event for each illegal unused connection.
             } else {
-                nextBridge = node.connectedBridges.firstOrNull()
+                nextConnection = node.connections.firstOrNull()
             }
 
-            if ( pathOwner == null || nextBridge == null) {
+            if (pathOwner == null || nextConnection == null) {
                 continue
             }
 
-            if (nextBridge.canTeamUseBridge(pathOwner)) {
-                bridges += nextBridge
+            if (nextConnection.canTeamUse(pathOwner)) {
+                connections += nextConnection
 
                 // One of these will be the same as startingFloor and return immediately.
-                buildPath(nextBridge.startNode.floor, allTowers, errorChannel)
-                buildPath(nextBridge.endNode?.floor ?: continue, allTowers, errorChannel)
+                buildPath(nextConnection.nodeA.floor, allTowers, errors)
+                buildPath(nextConnection.nodeB?.floor ?: continue, allTowers, errors)
             }
-
-//            val nextFloor = if (nextBridge.startNode == node) {
-//                nextBridge.endNode?.floor
-//            } else {
-//                nextBridge.startNode.floor
-//            }
-//            if (nextFloor == null) {
-//                // TODO: Send error event - Node not connected to a floor
-//                println("Node at ${node.worldCoords} is not connected to a floor")
-//            } else {
-//                buildPath(nextFloor)
-//            }
         }
     }
 
-    fun createDebugLines(world: World, config: ModConfig): List<DebugLine> {
+    fun createRenderedLines(world: World, config: ModConfig): List<RenderedLine> {
         val color = Color.fromHex(pathOwner?.rgba ?: 0)
 
-        val bridgeLines = bridges.map {
-            if (it.endNode == null) {
-                return@map null
+        return connections.flatMap { connection ->
+            connection.nodeB ?: return@flatMap emptyList()
+            when (connection) {
+                is Ladder -> {
+                    // Offset by the ladder's facing direction so the line isn't hidden inside the beacon beam
+                    val ladderBlock = world.getBlockState(connection.nodeA.floor.worldCenter)
+                    val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
+                    connection.segments.map { seg ->
+                        RenderedLine(seg.start + facing.vector, seg.end + facing.vector, color)
+                    }
+                }
+                is Bridge -> connection.segments.map { seg -> RenderedLine(seg.start, seg.end, color) }
+                is Circuit -> {
+                    // Shared noise vector across all segments so corners connect visually
+                    val noiseVec = Vec3d(
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                        (-0.5..0.5).randomFloat().toDouble() / 2,
+                    )
+                    connection.segments.map { seg ->
+                        RenderedLine(seg.start.up(2), seg.end.up(2), color, noiseVectorOverride = noiseVec)
+                    }
+                }
             }
-            return@map DebugLine(it.startNode.worldPosition, it.endNode.worldPosition, color)
-        }.filterNotNull().toList()
-
-        val ladderLines = floors
-            .filter { it.hasLadder }
-            .map { floor ->
-                // offset the coords by 1 block in the direction the ladder is facing so the line doesn't get hidden
-                // inside of the beacon beam
-                val ladderBlock = world.getBlockState(floor.worldCenter)
-                val facing = ladderBlock?.get(LadderBlock.FACING) ?: Direction.NORTH
-                val startPos = floor.worldCenter + facing.vector
-                val endPath = startPos.up(config.towerConfig.blocksBetweenFloors)
-
-                DebugLine(startPos, endPath, color)
-            }
-            .toList()
-
-        return bridgeLines + ladderLines
+        }
     }
 }

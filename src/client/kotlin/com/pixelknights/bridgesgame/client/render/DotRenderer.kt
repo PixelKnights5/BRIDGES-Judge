@@ -1,142 +1,166 @@
 package com.pixelknights.bridgesgame.client.render
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
-import net.minecraft.client.render.*
-import net.minecraft.client.util.math.MatrixStack
-import net.minecraft.util.math.Vec3d
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.render.OverlayTexture
+import net.minecraft.client.render.RenderLayers
+import net.minecraft.client.render.VertexConsumer
+import net.minecraft.client.render.WorldRenderer
+import net.minecraft.util.math.Direction
+import net.minecraft.util.math.random.Random
 import org.joml.Matrix4f
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.getValue
 
 class DotRenderer : KoinComponent {
-    val dotsToRender: MutableSet<DebugDot> = mutableSetOf()
+    val dotsToRender: MutableSet<RenderedDot> = mutableSetOf()
 
     val config: ModConfig by inject()
-
-    // Store positions where dots should be rendered
-
-//    init {
-//        // Register the render callback
-//        WorldRenderEvents.AFTER_TRANSLUCENT.register { context ->
-//            renderDots(context)
-//        }
-//    }
 
     fun renderDots(context: WorldRenderContext) {
         if (!config.playerSettings.showBridgePaths) {
             return
         }
 
-        val matrices = context.matrixStack() ?: throw IllegalStateException("MatrixStack is null")
-        val camera = context.camera()
+        val matrices = context.matrices()
+        val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers() ?: return
+        val world = MinecraftClient.getInstance().world ?: return
 
-        // Save the current matrix state
-        matrices.push()
-
-        // Get camera position for proper rendering position
-        val cameraPos = camera.pos
+        val model = BridgesModels.bakedDot() ?: return
+        val parts = model.getParts(RANDOM)
+        val consumer = vertexConsumers.getBuffer(RenderLayers.solid())
+        val brightnesses = floatArrayOf(1f, 1f, 1f, 1f)
 
         for (dot in dotsToRender) {
-            // Translate to the block position
+            matrices.push()
             matrices.translate(
-                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
-                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
-                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
+                dot.position.x - cameraPos.x + dot.noise.x,
+                dot.position.y - cameraPos.y + dot.noise.y,
+                dot.position.z - cameraPos.z + dot.noise.z,
             )
 
-            // Draw the dot
-            drawDot(
-                matrices,
-                vertexConsumers,
-                dot.color
-            )
+            val light = WorldRenderer.getLightmapCoordinates(world, dot.position)
+            val lights = intArrayOf(light, light, light, light)
+            val r = dot.color.red
+            val g = dot.color.green
+            val b = dot.color.blue
+            val a = dot.color.alpha
+            val entry = matrices.peek()
 
-            // Reset translation for next dot
-            matrices.translate(
-                -(dot.position.x - cameraPos.x + 0.5 + dot.noise.x),
-                -(dot.position.y - cameraPos.y + 0.5 + dot.noise.y),
-                -(dot.position.z - cameraPos.z + 0.5 + dot.noise.z)
-            )
+            for (part in parts) {
+                for (direction in Direction.entries) {
+                    for (quad in part.getQuads(direction)) {
+                        consumer.quad(entry, quad, brightnesses, r, g, b, a, lights, OverlayTexture.DEFAULT_UV)
+                    }
+                }
+                for (quad in part.getQuads(null)) {
+                    consumer.quad(entry, quad, brightnesses, r, g, b, a, lights, OverlayTexture.DEFAULT_UV)
+                }
+            }
+
+            matrices.pop()
         }
-
-        // Restore the matrix state
-        matrices.pop()
+//
+//        val outlineConsumer = vertexConsumers.getBuffer(RenderLayers.lines())
+//        for (dot in dotsToRender) {
+//            matrices.push()
+//            matrices.translate(
+//                dot.position.x - cameraPos.x + 0.5 + dot.noise.x,
+//                dot.position.y - cameraPos.y + 0.5 + dot.noise.y,
+//                dot.position.z - cameraPos.z + 0.5 + dot.noise.z
+//            )
+//
+//            drawOutline(outlineConsumer, matrices.peek().positionMatrix)
+//
+//            matrices.pop()
+//        }
     }
 
-    private fun drawDot(
-        matrices: MatrixStack,
-        vertexConsumers: VertexConsumerProvider,
-        color: Color
-    ) {
-        val size = 0.1f  // Size of the dot in blocks
-        val consumer = vertexConsumers.getBuffer(RenderLayer.getTranslucentMovingBlock())
-        val matrix = matrices.peek().positionMatrix
-        val light = LightmapTextureManager.MAX_LIGHT_COORDINATE
-
-        // Draw a quad facing all directions to make the dot visible from any angle
-        drawQuad(consumer, matrix, color, size, light, Vec3d(1.0, 0.0, 0.0))  // X facing
-        drawQuad(consumer, matrix, color, size, light, Vec3d(0.0, 1.0, 0.0))  // Y facing
-        drawQuad(consumer, matrix, color, size, light, Vec3d(0.0, 0.0, 1.0))  // Z facing
-    }
-
-    private fun drawQuad(
+    private fun drawCube(
         consumer: VertexConsumer,
         matrix: Matrix4f,
         color: Color,
-        size: Float,
-        light: Int,
-        normal: Vec3d
+        light: Int
     ) {
-        val halfSize = size / 2f
+        val h = DOT_SIZE / 2f
+        val r = color.red
+        val g = color.green
+        val b = color.blue
+        val a = color.alpha
+        val overlay = OverlayTexture.DEFAULT_UV
 
-        // Calculate vertices based on the normal direction
-        val (x1, y1, z1) = when {
-            normal.x != 0.0 -> Triple(-halfSize, -halfSize, 0f)
-            normal.y != 0.0 -> Triple(-halfSize, 0f, -halfSize)
-            else -> Triple(0f, -halfSize, -halfSize)
-        }
+        // Front (-Z)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, 0f, 0f, -1f,
+            -h,  h, -h,  h,  h, -h,  h, -h, -h, -h, -h, -h)
+        // Back (+Z)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, 0f, 0f, 1f,
+             h,  h,  h, -h,  h,  h, -h, -h,  h,  h, -h,  h)
+        // Left (-X)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, -1f, 0f, 0f,
+            -h,  h,  h, -h,  h, -h, -h, -h, -h, -h, -h,  h)
+        // Right (+X)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, 1f, 0f, 0f,
+             h,  h, -h,  h,  h,  h,  h, -h,  h,  h, -h, -h)
+        // Top (+Y)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, 0f, 1f, 0f,
+            -h,  h,  h,  h,  h,  h,  h,  h, -h, -h,  h, -h)
+        // Bottom (-Y)
+        drawFace(consumer, matrix, r, g, b, a, light, overlay, 0f, -1f, 0f,
+            -h, -h, -h,  h, -h, -h,  h, -h,  h, -h, -h,  h)
+    }
 
-        val (x2, y2, z2) = when {
-            normal.x != 0.0 -> Triple(-halfSize, halfSize, 0f)
-            normal.y != 0.0 -> Triple(-halfSize, 0f, halfSize)
-            else -> Triple(0f, -halfSize, halfSize)
-        }
+    private fun drawFace(
+        consumer: VertexConsumer,
+        matrix: Matrix4f,
+        r: Float, g: Float, b: Float, a: Float,
+        light: Int, overlay: Int,
+        nx: Float, ny: Float, nz: Float,
+        x1: Float, y1: Float, z1: Float,
+        x2: Float, y2: Float, z2: Float,
+        x3: Float, y3: Float, z3: Float,
+        x4: Float, y4: Float, z4: Float
+    ) {
+        consumer.vertex(matrix, x1, y1, z1).color(r, g, b, a).texture(0f, 0f).overlay(overlay).light(light).normal(nx, ny, nz)
+        consumer.vertex(matrix, x2, y2, z2).color(r, g, b, a).texture(1f, 0f).overlay(overlay).light(light).normal(nx, ny, nz)
+        consumer.vertex(matrix, x3, y3, z3).color(r, g, b, a).texture(1f, 1f).overlay(overlay).light(light).normal(nx, ny, nz)
+        consumer.vertex(matrix, x4, y4, z4).color(r, g, b, a).texture(0f, 1f).overlay(overlay).light(light).normal(nx, ny, nz)
+    }
 
-        val (x3, y3, z3) = when {
-            normal.x != 0.0 -> Triple(halfSize, halfSize, 0f)
-            normal.y != 0.0 -> Triple(halfSize, 0f, halfSize)
-            else -> Triple(0f, halfSize, halfSize)
-        }
+    private fun drawOutline(consumer: VertexConsumer, matrix: Matrix4f) {
+        val h = DOT_SIZE / 2f
+        // Bottom face
+        drawEdge(consumer, matrix, -h, -h, -h,  h, -h, -h,  1f,  0f,  0f)
+        drawEdge(consumer, matrix,  h, -h, -h,  h, -h,  h,  0f,  0f,  1f)
+        drawEdge(consumer, matrix,  h, -h,  h, -h, -h,  h, -1f,  0f,  0f)
+        drawEdge(consumer, matrix, -h, -h,  h, -h, -h, -h,  0f,  0f, -1f)
+        // Top face
+        drawEdge(consumer, matrix, -h,  h, -h,  h,  h, -h,  1f,  0f,  0f)
+        drawEdge(consumer, matrix,  h,  h, -h,  h,  h,  h,  0f,  0f,  1f)
+        drawEdge(consumer, matrix,  h,  h,  h, -h,  h,  h, -1f,  0f,  0f)
+        drawEdge(consumer, matrix, -h,  h,  h, -h,  h, -h,  0f,  0f, -1f)
+        // Vertical edges
+        drawEdge(consumer, matrix, -h, -h, -h, -h,  h, -h,  0f,  1f,  0f)
+        drawEdge(consumer, matrix,  h, -h, -h,  h,  h, -h,  0f,  1f,  0f)
+        drawEdge(consumer, matrix,  h, -h,  h,  h,  h,  h,  0f,  1f,  0f)
+        drawEdge(consumer, matrix, -h, -h,  h, -h,  h,  h,  0f,  1f,  0f)
+    }
 
-        val (x4, y4, z4) = when {
-            normal.x != 0.0 -> Triple(halfSize, -halfSize, 0f)
-            normal.y != 0.0 -> Triple(halfSize, 0f, -halfSize)
-            else -> Triple(0f, halfSize, -halfSize)
-        }
+    private fun drawEdge(
+        consumer: VertexConsumer,
+        matrix: Matrix4f,
+        x1: Float, y1: Float, z1: Float,
+        x2: Float, y2: Float, z2: Float,
+        nx: Float, ny: Float, nz: Float
+    ) {
+        consumer.vertex(matrix, x1, y1, z1).color(0, 0, 0, 255).normal(nx, ny, nz).lineWidth(OUTLINE_WIDTH)
+        consumer.vertex(matrix, x2, y2, z2).color(0, 0, 0, 255).normal(nx, ny, nz).lineWidth(OUTLINE_WIDTH)
+    }
 
-        // Draw the quad
-        consumer.vertex(matrix, x1, y1, z1).color(color.red, color.green, color.blue, color.alpha)
-            .texture(0f, 0f)
-            .overlay(OverlayTexture.DEFAULT_UV)
-            .light(light)
-            .normal(normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat())
-        consumer.vertex(matrix, x2, y2, z2).color(color.red, color.green, color.blue, color.alpha)
-            .texture(0f, 1f)
-            .overlay(OverlayTexture.DEFAULT_UV)
-            .light(light)
-            .normal(normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat())
-        consumer.vertex(matrix, x3, y3, z3).color(color.red, color.green, color.blue, color.alpha)
-            .texture(1f, 1f)
-            .overlay(OverlayTexture.DEFAULT_UV)
-            .light(light)
-            .normal(normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat())
-        consumer.vertex(matrix, x4, y4, z4).color(color.red, color.green, color.blue, color.alpha)
-            .texture(1f, 0f)
-            .overlay(OverlayTexture.DEFAULT_UV)
-            .light(light)
-            .normal(normal.x.toFloat(), normal.y.toFloat(), normal.z.toFloat())
+    private companion object {
+        const val DOT_SIZE = 0.1f
+        const val OUTLINE_WIDTH = 5f
+        val RANDOM: Random = Random.create(0L)
     }
 }

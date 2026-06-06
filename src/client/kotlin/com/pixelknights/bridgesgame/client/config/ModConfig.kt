@@ -18,7 +18,7 @@ data class ModConfig(
     val boardConfig: BoardConfig = BoardConfig(),
     val towerConfig: TowerConfig = TowerConfig(),
     val playerSettings: PlayerSettings = PlayerSettings(),
-    val configVersion: Int = 1,
+    val configVersion: Int = CURRENT_VERSION,
 ) {
 
     @Transient
@@ -47,10 +47,11 @@ data class ModConfig(
         private const val CONFIG_FILE_NAME = "mod_config.json"
         private val SAVE_DIR = Paths.get(FabricLoader.getInstance().configDir.pathString, MOD_ID)
 
+        const val CURRENT_VERSION = 3
+
         @JvmStatic
         fun loadConfig(saveFile: Path = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)): ModConfig {
             MOD_LOGGER.info("Loading mod configuration")
-//            val saveFile = Paths.get(SAVE_DIR.pathString, CONFIG_FILE_NAME)
             if (!Files.exists(saveFile)) {
                 MOD_LOGGER.info("No existing save file found, creating new one.")
                 val config = ModConfig()
@@ -60,15 +61,23 @@ data class ModConfig(
 
             val gson = GsonBuilder().setPrettyPrinting().create()
             val fileContents = Files.readString(saveFile, StandardCharsets.UTF_8)
-            return gson.fromJson(fileContents, ModConfig::class.java)
+            val loaded = gson.fromJson(fileContents, ModConfig::class.java)
 
+            if (loaded.configVersion < CURRENT_VERSION) {
+                MOD_LOGGER.info("Config version ${loaded.configVersion} is older than $CURRENT_VERSION — overwriting with v$CURRENT_VERSION defaults.")
+                val fresh = ModConfig()
+                fresh.save()
+                return fresh
+            }
+
+            return loaded
         }
     }
 }
 
 data class BoardConfig(
-    val width: Int = 19,
-    val height: Int = 19,
+    val width: Int = 13,
+    val height: Int = 11,
     val blocksBetweenTowers: Int = 5,
     val towerDiameter: Int = 5,
     val maxGameHeight: Int = 30,
@@ -82,7 +91,7 @@ data class TowerConfig (
 )
 
 data class PlayerSettings (
-    var centerCoordinate: BlockPos = BlockPos.ORIGIN,
+    var centerCoordinate: BlockPos = BlockPos(1024, 65, 1), // Coords on TC
     var showBridgePaths: Boolean = true,
     var showTowerState: Boolean = true,
 )
