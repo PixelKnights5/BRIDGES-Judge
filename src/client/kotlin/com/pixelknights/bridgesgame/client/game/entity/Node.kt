@@ -26,7 +26,7 @@ data class Node(
 ) {
     val connections: MutableSet<Connection> = mutableSetOf()
 
-    val coords = "${floor.coords}${side.name}"
+    val coords = "(${worldPosition.x}, ${worldPosition.y}, ${worldPosition.z})"
     val worldCoords = "(${worldPosition.x}, ${worldPosition.y}, ${worldPosition.z})"
 
     companion object {

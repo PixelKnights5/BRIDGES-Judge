@@ -4,9 +4,10 @@ import net.minecraft.util.math.BlockPos
 
 enum class ConnectionError {
     BRIDGE_TO_CLOSED_NODE,
-    MULTIPLE_BRIDGES_TO_SINGLE_NODE,
-    INCORRECT_SHAPE,
     CIRCUIT_TO_CLOSED_NODE,
+    MULTIPLE_CONNECTIONS_TO_SINGLE_NODE,
+    INTERSECTING_CONNECTION,
+    INCORRECT_SHAPE,
 }
 
 sealed interface Connection {

@@ -79,6 +79,7 @@ class GameBoard(
         calculateScores(
             towers = localTowers,
             bridges = localBridges,
+            connections = allConnections,
             paths = localPaths,
             teams = localTeams,
             errors = localErrors,
@@ -152,6 +153,7 @@ class GameBoard(
     private fun calculateScores(
         towers: List<List<Tower>>,
         bridges: Set<Bridge>,
+        connections: Set<Connection>,
         paths: MutableList<Path>,
         teams: MutableMap<GameColor, Team>,
         errors: MutableList<String>,
@@ -234,6 +236,25 @@ class GameBoard(
                     warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
                 }
         }
+
+        // Report connections that physically cross each other
+        ConnectionValidator.findIntersections(connections).forEach { (a, b, point) ->
+            errors += "Connection ${a.nodeA.coords}-${a.nodeB?.coords ?: "?"} intersects ${b.nodeA.coords}-${b.nodeB?.coords ?: "?"}"
+            warnings += WarningIcon(warningPosition(point, a, b), Color.WHITE)
+        }
+
+        // Report nodes with more than one connection (excluding ladder-only nodes)
+        ConnectionValidator.findOverloadedNodes(connections).forEach { node ->
+            errors += "Node ${node.coords} has multiple connections attached"
+            node.connections
+                .filter { it !is Ladder }
+                .forEach { connection ->
+                    val isCircuit = connection is Circuit
+                    val team = if (isCircuit) null else connection.owner ?: connection.painter
+                    val color = if (team != null) Color.fromHex(team.rgba) else Color.WHITE
+                    warnings += WarningIcon(warningPosition(connection.midpoint, connection), color)
+                }
+        }
     }
 
     private fun buildTeamPaths(
@@ -298,6 +319,11 @@ class GameBoard(
             result += textBlock
         }
         return result
+    }
+
+    // Circuit segments run through solid blocks, so shift the icon up one block to stay visible.
+    private fun warningPosition(pos: BlockPos, vararg connections: Connection): BlockPos {
+        return if (connections.any { it is Circuit }) pos.up() else pos
     }
 
 }
