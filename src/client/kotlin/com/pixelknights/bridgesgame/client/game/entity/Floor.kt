@@ -11,6 +11,7 @@ data class Floor (
     val worldCenter: BlockPos,
     val captureColor: GameColor? = null,
     val paintColor: GameColor? = null,
+    val blockingTeamColor: GameColor? = null,
     val isBase: Boolean,
 ) {
 
@@ -19,6 +20,9 @@ data class Floor (
 
     val isPainted: Boolean
         get() = paintColor != null
+
+    val isBlocked: Boolean
+        get() = blockingTeamColor != null
 
     val owner: GameColor?
         get() = paintColor ?: captureColor

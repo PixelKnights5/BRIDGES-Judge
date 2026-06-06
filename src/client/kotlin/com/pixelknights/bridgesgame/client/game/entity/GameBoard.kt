@@ -196,10 +196,11 @@ class GameBoard(
             val numBridgePaints = bridges.filter { ConnectionError.BRIDGE_TO_CLOSED_NODE !in it.errors }.count { it.painter == teamColor }
             val floorClaims = towers.flatten().flatMap { it.floors }.count { it.captureColor == teamColor }
             val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
+            val floorBlocks = towers.flatten().flatMap { it.floors }.count { it.blockingTeamColor == teamColor }
             val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }
             // Scrapes should be added here, but the mod has no "memory" of previous days so this is not possible to count.
 
-            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + towerClaims
+            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + towerClaims
         }
 
         logger.info("Teams = $teams")
@@ -217,6 +218,17 @@ class GameBoard(
                 if (it.isPainted && it.isPaintValidated != true) {
                     errors += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network"
                 }
+            }
+
+        // Report floors blocked by a team that does not own them
+        towers
+            .asSequence()
+            .flatten()
+            .flatMap { it.floors }
+            .filter { it.isBlocked && it.blockingTeamColor != it.owner }
+            .forEach {
+                errors += "Floor ${it.coords} ${it.worldCoords} blocked by ${it.blockingTeamColor} but owned by ${it.owner ?: "no team"}"
+                warnings += WarningIcon(it.worldCenter, Color.fromHex(it.blockingTeamColor!!.rgba))
             }
 
         // Report bridges that connect to/from a closed node
@@ -304,7 +316,6 @@ class GameBoard(
                 textBlock.addLine("Tower captured by: ${tower.capturingTeam} (+${pointValue})", color)
             }
 
-            textBlock.addLine("§nFloors:", Color.WHITE)
             tower.floors
                 .groupBy { it.owner }
                 .forEach { team, groupFloors ->
@@ -312,7 +323,9 @@ class GameBoard(
                     if (team == null) {
                         textBlock.addLine("Uncaptured floors: $floorNumbers", Color.WHITE)
                     } else {
-                        textBlock.addLine("Team $team captured: $floorNumbers", Color.fromHex(team.rgba))
+                        val blockedNumbers = groupFloors.filter { it.blockingTeamColor == team }.map { it.floorNumber + 1 }
+                        val blockedSuffix = if (blockedNumbers.isNotEmpty()) " and blocked $blockedNumbers" else ""
+                        textBlock.addLine("Team $team captured $floorNumbers$blockedSuffix", Color.fromHex(team.rgba))
                     }
                 }
 

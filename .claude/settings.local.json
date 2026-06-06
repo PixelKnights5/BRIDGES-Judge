@@ -18,7 +18,9 @@
       "Bash(grep -i \"\\\\.kt$\")",
       "mcp__idea__find_files_by_name_keyword",
       "mcp__idea__search_in_files_by_text",
-      "mcp__idea__read_file"
+      "mcp__idea__read_file",
+      "mcp__idea__list_directory_tree",
+      "mcp__idea__get_file_text_by_path"
     ]
   }
 }
