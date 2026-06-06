@@ -138,10 +138,10 @@ class JudgeGameCommand(
                 Towers: ${gameBoard.teams[GameColor.RED]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.RED]?.points ?: "N/A"}
                 Moves: ${gameBoard.teams[GameColor.RED]?.moves ?: "N/A"} §r
-            §l§3Cyan:
-                Towers: ${gameBoard.teams[GameColor.CYAN]?.capturedTowers ?: "N/A"}
-                Points: ${gameBoard.teams[GameColor.CYAN]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.CYAN]?.moves ?: "N/A"} §r
+            §l§9Blue:
+                Towers: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.capturedTowers ?: "N/A"}
+                Points: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.points ?: "N/A"}
+                Moves: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.moves ?: "N/A"} §r
             §l§eYellow:
                 Towers: ${gameBoard.teams[GameColor.YELLOW]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.YELLOW]?.points ?: "N/A"}
@@ -150,10 +150,10 @@ class JudgeGameCommand(
                 Towers: ${gameBoard.teams[GameColor.GREEN]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.GREEN]?.points ?: "N/A"}
                 Moves: ${gameBoard.teams[GameColor.GREEN]?.moves ?: "N/A"} §r
-            §l§dMagenta:
-                Towers: ${gameBoard.teams[GameColor.MAGENTA]?.capturedTowers ?: "N/A"}
-                Points: ${gameBoard.teams[GameColor.MAGENTA]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.MAGENTA]?.moves ?: "N/A"} §r
+            §l§dPurple:
+                Towers: ${gameBoard.teams[GameColor.PURPLE]?.capturedTowers ?: "N/A"}
+                Points: ${gameBoard.teams[GameColor.PURPLE]?.points ?: "N/A"}
+                Moves: ${gameBoard.teams[GameColor.PURPLE]?.moves ?: "N/A"} §r
             §l§6Orange:
                 Towers: ${gameBoard.teams[GameColor.ORANGE]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.ORANGE]?.points ?: "N/A"}

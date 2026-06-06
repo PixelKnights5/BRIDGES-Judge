@@ -11,8 +11,8 @@ enum class GameColor(
     ORANGE("o", "orange", true, 0xFFAA00FF),
     YELLOW("y", "yellow", true, 0xFFFF00FF),
     GREEN("g", "lime", true, 0x009900FF),
-    CYAN("c", "cyan", true, 0X008B8BFF),
-    MAGENTA("m", "magenta", true, 0xFF00FFFF),
+    LIGHT_BLUE("c", "light_blue", true, 0X008B8BFF),
+    PURPLE("m", "purple", true, 0xFF00FFFF),
     RED("r", "red", true, 0xFF0000FF),
     WHITE("w", null, false, 0xFFFFFFFF),
     GREY("x", null, false, 0x808080FF);

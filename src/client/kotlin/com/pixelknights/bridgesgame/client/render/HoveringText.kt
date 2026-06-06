@@ -59,7 +59,7 @@ class HoveringTextRenderer(
     fun renderText(context: WorldRenderContext, text: TextLine, pos: Vector3f) {
         val matrix = Matrix4f()
         val cameraPos = context.worldState().cameraRenderState.pos.toVector3f()
-        val vertexConsumers = context.consumers() ?: return
+        val vertexConsumers = context.consumers()
         val textRenderer = mc.textRenderer
 
 
