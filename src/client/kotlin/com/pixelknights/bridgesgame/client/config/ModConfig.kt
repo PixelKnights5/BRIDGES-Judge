@@ -91,7 +91,7 @@ data class TowerConfig (
 )
 
 data class PlayerSettings (
-    var centerCoordinate: BlockPos = BlockPos.ORIGIN,
+    var centerCoordinate: BlockPos = BlockPos(1024, 65, 1), // Coords on TC
     var showBridgePaths: Boolean = true,
     var showTowerState: Boolean = true,
 )
