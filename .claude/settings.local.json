@@ -15,7 +15,10 @@
       "Bash(./gradlew test *)",
       "Bash(grep -v \"\\\\-\\\\-$\")",
       "Bash(grep -v \"{$\")",
-      "Bash(grep -i \"\\\\.kt$\")"
+      "Bash(grep -i \"\\\\.kt$\")",
+      "mcp__idea__find_files_by_name_keyword",
+      "mcp__idea__search_in_files_by_text",
+      "mcp__idea__read_file"
     ]
   }
 }

@@ -9,6 +9,8 @@ import kotlin.test.assertTrue
 
 class ConnectionTest {
 
+    private val stubScoring = TowerScoring(emptyMap())
+
     // ---- helpers --------------------------------------------------------
 
     private fun makeFloor(
@@ -173,7 +175,7 @@ class ConnectionTest {
         floor0.centerNode().connections += ladder
         floor1.centerNode().connections += ladder
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertTrue(floor0 in path.floors, "floor0 should be in path")
@@ -191,7 +193,7 @@ class ConnectionTest {
         floor0.centerNode().connections += ladder
         floor1.centerNode().connections += ladder
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertTrue(floor0.isCaptureValidated == true, "floor0 should be capture-validated")
@@ -215,7 +217,7 @@ class ConnectionTest {
         )
         floor0.perimeterNode(NodeSide.N).connections += brokenBridge
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         // Only floor0 is reachable; the broken bridge leads nowhere
@@ -229,7 +231,7 @@ class ConnectionTest {
         val floor1 = tower.floors[1]
         // No ladder or bridge added — floor1 is isolated
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertTrue(floor0 in path.floors)

@@ -13,6 +13,7 @@ import net.minecraft.world.World
 
 class Path (
     val pathOwner: GameColor?,
+    private val scoring: TowerScoring,
 ) {
     val connections: MutableSet<Connection> = mutableSetOf()
     val floors: MutableSet<Floor> = mutableSetOf()
@@ -34,7 +35,7 @@ class Path (
             .toSet()
         val capturedTowerPoints = towers.sumOf { tower ->
             when (tower.capturingTeam) {
-                pathOwner -> tower.getCapturePoints(pathOwner)
+                pathOwner -> scoring.getCapturePoints(pathOwner, tower.color)
                 else -> 0
             }
         }
@@ -69,7 +70,7 @@ class Path (
                 val allOptions = node.connections
                     .filter { it.errors.isEmpty() }
                     .associate { connection ->
-                    val pathOption = Path(this.pathOwner).also { copy ->
+                    val pathOption = Path(this.pathOwner, scoring).also { copy ->
                         copy.connections += (this.connections + connection)
                         copy.floors += (this.floors + startingFloor)
                     }

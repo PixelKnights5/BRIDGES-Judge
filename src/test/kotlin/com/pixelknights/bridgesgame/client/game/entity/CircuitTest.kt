@@ -8,6 +8,8 @@ import kotlin.test.assertTrue
 
 class CircuitTest {
 
+    private val stubScoring = TowerScoring(emptyMap())
+
     // ---- helpers --------------------------------------------------------
 
     private fun makeFloor(
@@ -116,7 +118,7 @@ class CircuitTest {
         nodeA.connections += circuit
         nodeB.connections += circuit
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertTrue(floor0 in path.floors, "floor0 should be in path")
@@ -137,7 +139,7 @@ class CircuitTest {
         )
         floor0.perimeterNode(NodeSide.N).connections += danglingCircuit
 
-        val path = Path(pathOwner = GameColor.ORANGE)
+        val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
         path.buildPath(floor0, listOf(tower), mutableListOf())
 
         assertEquals(setOf(floor0), path.floors)

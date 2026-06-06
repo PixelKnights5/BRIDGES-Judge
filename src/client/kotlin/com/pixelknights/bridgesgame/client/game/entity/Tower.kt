@@ -31,17 +31,6 @@ class Tower(
     }
 
     /**
-     * Calculate the points that a tower is worth for a given team. Does not validate if the tower is captured.
-     */
-    fun getCapturePoints(team: GameColor): Int {
-        return when (color) {
-            GameColor.WHITE -> 3
-            team -> 1
-            else -> 2
-        }
-    }
-
-    /**
      * Get the team that placed the tower claim block, but don't confirm that the claim is valid.
      * To check if the claim is valid, use [setCapturingTeam] then check the [capturingTeam] property.
      */

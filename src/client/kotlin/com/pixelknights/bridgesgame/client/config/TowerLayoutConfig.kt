@@ -45,7 +45,12 @@ class TowerLayoutConfig(
                 it.key contentEquals arrayOf(row, col)
             }
             .any()
+    }
 
+    fun getBasePositions(): Map<GameColor, Pair<Int, Int>> {
+        return baseMap.entries.associate { (position, color) ->
+            color to (position[0] to position[1])
+        }
     }
 
     private fun loadColorMap() {

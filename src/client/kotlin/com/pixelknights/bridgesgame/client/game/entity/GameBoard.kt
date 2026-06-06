@@ -1,6 +1,7 @@
 package com.pixelknights.bridgesgame.client.game.entity
 
 import com.pixelknights.bridgesgame.client.config.ModConfig
+import com.pixelknights.bridgesgame.client.config.TowerLayoutConfig
 import com.pixelknights.bridgesgame.client.game.entity.scanner.BridgeScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.CircuitScanner
 import com.pixelknights.bridgesgame.client.game.entity.scanner.LadderScanner
@@ -12,6 +13,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3i
 import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class GameBoard(
     private val towerScanner: TowerScanner,
@@ -26,6 +28,9 @@ class GameBoard(
     private val textRenderer: HoveringTextRenderer,
     private val warningIconRenderer: WarningIconRenderer,
 ) : KoinComponent {
+
+    private val layoutConfig: TowerLayoutConfig by inject()
+    private val towerScoring: TowerScoring by lazy { TowerScoring(layoutConfig.getBasePositions()) }
 
     private var towers: MutableList<MutableList<Tower>> = mutableListOf()
     private var bridges: MutableSet<Bridge> = mutableSetOf()
@@ -264,7 +269,7 @@ class GameBoard(
     ) {
         paths += GameColor.entries
             .filter { it.isTeam }
-            .map { team -> Path(team) }
+            .map { team -> Path(team, towerScoring) }
             .toList()
 
         val allTowers = towers.asSequence().flatten()
@@ -295,7 +300,7 @@ class GameBoard(
                 textBlock.addLine("Tower not captured", Color.WHITE)
             } else {
                 val color = Color.fromHex(tower.capturingTeam!!.rgba)
-                val pointValue = tower.getCapturePoints(tower.capturingTeam!!)
+                val pointValue = towerScoring.getCapturePoints(tower.capturingTeam!!, tower.color)
                 textBlock.addLine("Tower captured by: ${tower.capturingTeam} (+${pointValue})", color)
             }
 
