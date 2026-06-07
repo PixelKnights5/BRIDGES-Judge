@@ -77,9 +77,8 @@ class GameBoard(
             connection.nodeB?.connections += connection
         }
 
-        val localErrors = mutableListOf<String>()
         val localPaths = mutableListOf<Path>()
-        val localWarnings = mutableListOf<WarningIcon>()
+        val localWarnings = mutableListOf<GameWarning>()
 
         calculateScores(
             towers = localTowers,
@@ -87,7 +86,6 @@ class GameBoard(
             connections = allConnections,
             paths = localPaths,
             teams = localTeams,
-            errors = localErrors,
             warnings = localWarnings,
         )
 
@@ -103,6 +101,8 @@ class GameBoard(
 
         val localTextsToRender = buildTowerStatsText(localTowers.flatten().toList(), centerCoordinate)
 
+        val numberedWarnings = localWarnings.mapIndexed { i, w -> w.copy(id = i + 1) }
+
         return ScanResult(
             towers = localTowers,
             bridges = localBridges,
@@ -113,8 +113,7 @@ class GameBoard(
             linesToRender = localLinesToRender,
             dotsToRender = localDotsToRender,
             textsToRender = localTextsToRender,
-            warnings = localWarnings,
-            errors = localErrors,
+            warnings = numberedWarnings,
         )
     }
 
@@ -161,8 +160,7 @@ class GameBoard(
         connections: Set<Connection>,
         paths: MutableList<Path>,
         teams: MutableMap<GameColor, Team>,
-        errors: MutableList<String>,
-        warnings: MutableList<WarningIcon>,
+        warnings: MutableList<GameWarning>,
     ) {
         logger.info("Validating game...")
 
@@ -172,7 +170,7 @@ class GameBoard(
             return
         }
 
-        buildTeamPaths(towers, paths, errors)
+        buildTeamPaths(towers, paths)
 
         towers.flatten().forEach { tower ->
             tower.setCapturingTeam(world, config)
@@ -213,10 +211,18 @@ class GameBoard(
             .filter { (it.isCaptured && it.isCaptureValidated != true) || (it.isPainted && it.isPaintValidated != true) }
             .forEach {
                 if (it.isCaptured && it.isCaptureValidated != true) {
-                    errors += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.captureColor} network"
+                    warnings += GameWarning(
+                        position = it.worldCenter,
+                        color = Color.fromHex(it.captureColor!!.rgba),
+                        message = "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.captureColor} network",
+                    )
                 }
                 if (it.isPainted && it.isPaintValidated != true) {
-                    errors += "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network"
+                    warnings += GameWarning(
+                        position = it.worldCenter,
+                        color = Color.fromHex(it.paintColor!!.rgba),
+                        message = "Floor ${it.coords} ${it.worldCoords} disconnected from ${it.paintColor} network",
+                    )
                 }
             }
 
@@ -227,8 +233,11 @@ class GameBoard(
             .flatMap { it.floors }
             .filter { it.isBlocked && it.blockingTeamColor != it.owner }
             .forEach {
-                errors += "Floor ${it.coords} ${it.worldCoords} blocked by ${it.blockingTeamColor} but owned by ${it.owner ?: "no team"}"
-                warnings += WarningIcon(it.worldCenter, Color.fromHex(it.blockingTeamColor!!.rgba))
+                warnings += GameWarning(
+                    position = it.worldCenter,
+                    color = Color.fromHex(it.blockingTeamColor!!.rgba),
+                    message = "Floor ${it.coords} ${it.worldCoords} blocked by ${it.blockingTeamColor} but owned by ${it.owner ?: "no team"}",
+                )
             }
 
         // Report bridges that connect to/from a closed node
@@ -237,8 +246,11 @@ class GameBoard(
             .distinctBy { it.segments }
             .forEach { bridge ->
                 val team = bridge.owner ?: bridge.painter ?: return@forEach
-                errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) connects to a closed node"
-                warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
+                warnings += GameWarning(
+                    position = bridge.midpoint,
+                    color = Color.fromHex(team.rgba),
+                    message = "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) connects to a closed node",
+                )
             }
 
         // Report bridges that belong to a team but are not reachable from their home base
@@ -249,35 +261,36 @@ class GameBoard(
                 .filter { it.owner == team || it.painter == team }
                 .filter { it !in path.connections }
                 .forEach { bridge ->
-                    errors += "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base"
-                    warnings += WarningIcon(bridge.midpoint, Color.fromHex(team.rgba))
+                    warnings += GameWarning(
+                        position = bridge.midpoint,
+                        color = Color.fromHex(team.rgba),
+                        message = "Bridge ${bridge.nodeA.coords} to ${bridge.nodeB?.coords ?: "?"} ($team) is not connected to $team's home base",
+                    )
                 }
         }
 
         // Report connections that physically cross each other
         ConnectionValidator.findIntersections(connections).forEach { (a, b, point) ->
-            errors += "Connection ${a.nodeA.coords}-${a.nodeB?.coords ?: "?"} intersects ${b.nodeA.coords}-${b.nodeB?.coords ?: "?"}"
-            warnings += WarningIcon(warningPosition(point, a, b), Color.WHITE)
+            warnings += GameWarning(
+                position = warningPosition(point, a, b),
+                color = Color.WHITE,
+                message = "Connection ${a.nodeA.coords}-${a.nodeB?.coords ?: "?"} intersects ${b.nodeA.coords}-${b.nodeB?.coords ?: "?"}",
+            )
         }
 
         // Report nodes with more than one connection (excluding ladder-only nodes)
         ConnectionValidator.findOverloadedNodes(connections).forEach { node ->
-            errors += "Node ${node.coords} has multiple connections attached"
-            node.connections
-                .filter { it !is Ladder }
-                .forEach { connection ->
-                    val isCircuit = connection is Circuit
-                    val team = if (isCircuit) null else connection.owner ?: connection.painter
-                    val color = if (team != null) Color.fromHex(team.rgba) else Color.WHITE
-                    warnings += WarningIcon(warningPosition(connection.midpoint, connection), color)
-                }
+            warnings += GameWarning(
+                position = node.worldPosition,
+                color = Color.WHITE,
+                message = "Node ${node.coords} has multiple connections attached",
+            )
         }
     }
 
     private fun buildTeamPaths(
         towers: List<List<Tower>>,
         paths: MutableList<Path>,
-        errors: MutableList<String>,
     ) {
         paths += GameColor.entries
             .filter { it.isTeam }
@@ -292,7 +305,7 @@ class GameBoard(
                 .flatMap { tower -> tower.floors }
                 .first { floor -> floor.isBase }
 
-            path.buildPath(baseFloor, allTowers.toList(), errors)
+            path.buildPath(baseFloor, allTowers.toList())
         }
     }
 

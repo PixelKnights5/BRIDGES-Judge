@@ -47,7 +47,7 @@ class Path (
      * Build a connection network and validate floors along the way.
      * The [startingFloor] must already be connected to the existing path.
      */
-    fun buildPath(startingFloor: Floor, allTowers: List<Tower>, errors: MutableList<String>) {
+    fun buildPath(startingFloor: Floor, allTowers: List<Tower>) {
         if (startingFloor in floors) {
             return
         }
@@ -76,17 +76,13 @@ class Path (
                     }
                     val endNode = connection.nodeB
                     if (endNode != null) {
-                        pathOption.buildPath(endNode.floor, allTowers, errors)
-                        pathOption.buildPath(connection.nodeA.floor, allTowers, errors)
+                        pathOption.buildPath(endNode.floor, allTowers)
+                        pathOption.buildPath(connection.nodeA.floor, allTowers)
                         return@associate connection to pathOption
                     } else {
                         return@associate connection to null
                     }
                 }
-                if (allOptions.size > 1) {
-                    errors += "Node ${node.coords} ${node.worldCoords} has multiple connections"
-                }
-
                 val bestOption = allOptions.maxBy { option -> option.value?.calculateScore() ?: Int.MIN_VALUE }
                 nextConnection = bestOption.key
 
@@ -103,8 +99,8 @@ class Path (
                 connections += nextConnection
 
                 // One of these will be the same as startingFloor and return immediately.
-                buildPath(nextConnection.nodeA.floor, allTowers, errors)
-                buildPath(nextConnection.nodeB?.floor ?: continue, allTowers, errors)
+                buildPath(nextConnection.nodeA.floor, allTowers)
+                buildPath(nextConnection.nodeB?.floor ?: continue, allTowers)
             }
         }
     }

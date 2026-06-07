@@ -119,7 +119,7 @@ class CircuitTest {
         nodeB.connections += circuit
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         assertTrue(floor0 in path.floors, "floor0 should be in path")
         assertTrue(floor1 in path.floors, "floor1 should be in path")
@@ -140,7 +140,7 @@ class CircuitTest {
         floor0.perimeterNode(NodeSide.N).connections += danglingCircuit
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         assertEquals(setOf(floor0), path.floors)
     }

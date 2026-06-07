@@ -1,6 +1,7 @@
 package com.pixelknights.bridgesgame.client.command
 
 import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.pixelknights.bridgesgame.client.config.ModConfig
@@ -8,9 +9,15 @@ import com.pixelknights.bridgesgame.client.di.Scopes
 import com.pixelknights.bridgesgame.client.game.ScanState
 import com.pixelknights.bridgesgame.client.game.entity.GameBoard
 import com.pixelknights.bridgesgame.client.game.entity.GameColor
+import com.pixelknights.bridgesgame.client.render.GameWarning
+import com.pixelknights.bridgesgame.client.render.WarningIconRenderer
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.client.MinecraftClient
+import net.minecraft.text.ClickEvent
+import net.minecraft.text.HoverEvent
 import net.minecraft.text.Text
+import net.minecraft.util.Formatting
+import net.minecraft.world.GameMode
 import org.apache.logging.log4j.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -28,8 +35,20 @@ class JudgeGameCommand(
     private val logger: Logger by inject()
     private val scanState: ScanState by inject()
     private val scanScope: CoroutineScope by inject(named(Scopes.BridgesScanScope))
+    private val warningIconRenderer: WarningIconRenderer by inject()
 
     override fun run(ctx: CommandContext<FabricClientCommandSource>): Int {
+        val hasWarningId = try {
+            IntegerArgumentType.getInteger(ctx, "warningId")
+            true
+        } catch (_: IllegalArgumentException) {
+            false
+        }
+
+        if (hasWarningId) {
+            return handleHighlightWarning(ctx)
+        }
+
         val action = StringArgumentType.getString(ctx, "action")
 
         return when (action) {
@@ -40,6 +59,8 @@ class JudgeGameCommand(
             "hidePathLines" -> handlePathLineVisibility(ctx, false)
             "showTowerText" -> handleTowerStateVisibility(ctx, true)
             "hideTowerText" -> handleTowerStateVisibility(ctx, false)
+            "showWarnings" -> handleWarningVisibility(ctx, true)
+            "hideWarnings" -> handleWarningVisibility(ctx, false)
             else -> commandNotImplemented(ctx)
         }
     }
@@ -60,10 +81,20 @@ class JudgeGameCommand(
                         return@execute
                     }
                     gameBoard.applyScanResult(result)
-                    result.errors.forEach { ctx.source.sendError(Text.of("WARNING: $it")) }
+                    val isCreative = mc.interactionManager?.currentGameMode == GameMode.CREATIVE
+                    result.warnings.forEach { w ->
+                        val token = Text.literal("[!] ").styled { style ->
+                            style
+                                .withColor(Formatting.RED)
+                                .withHoverEvent(HoverEvent.ShowText(Text.literal("Warning #${w.id} @ (${w.position.x}, ${w.position.y}, ${w.position.z})\nClick to ${if (isCreative) "teleport" else "highlight"}")))
+                                // Click action is fixed at message-build time; game mode changes after scan won't affect it.
+                                .withClickEvent(ClickEvent.RunCommand(warningClickCommand(isCreative, w)))
+                        }
+                        ctx.source.sendFeedback(token.append(Text.literal(w.message)))
+                    }
                     ctx.source.sendFeedback(getScoreText())
-                    if (result.errors.isNotEmpty()) {
-                        ctx.source.sendError(Text.of("${result.errors.size} warnings detected (see above scores)"))
+                    if (result.warnings.isNotEmpty()) {
+                        ctx.source.sendError(Text.of("${result.warnings.size} warnings detected (see above)"))
                     }
                 }
             } catch (t: Throwable) {
@@ -109,6 +140,43 @@ class JudgeGameCommand(
         } else {
             ctx.source.sendFeedback(Text.of("Hiding path lines"))
         }
+
+        return 0
+    }
+
+    private fun handleWarningVisibility(ctx: CommandContext<FabricClientCommandSource>, isVisible: Boolean): Int {
+        warningIconRenderer.warnings.forEach { it.isVisible = isVisible }
+
+        if (isVisible) {
+            ctx.source.sendFeedback(Text.of("Showing warning icons"))
+        } else {
+            ctx.source.sendFeedback(Text.of("Hiding warning icons"))
+        }
+
+        return 0
+    }
+
+    private fun handleHighlightWarning(ctx: CommandContext<FabricClientCommandSource>): Int {
+        val id = IntegerArgumentType.getInteger(ctx, "warningId")
+        val target = warningIconRenderer.warnings.find { it.id == id }
+
+        if (target == null) {
+            ctx.source.sendError(Text.of("No warning with id $id"))
+            return -1
+        }
+
+        warningIconRenderer.warnings.forEach { it.isVisible = (it.id == id) }
+
+        val unhighlightText = Text.literal("[un-highlight]").styled { style ->
+            style
+                .withColor(Formatting.YELLOW)
+                .withUnderline(true)
+                .withHoverEvent(HoverEvent.ShowText(Text.literal("Show all warning icons")))
+                .withClickEvent(ClickEvent.RunCommand("/bridges showWarnings"))
+        }
+        ctx.source.sendFeedback(
+            Text.literal("Highlighting warning #$id. ").append(unhighlightText)
+        )
 
         return 0
     }
@@ -166,6 +234,16 @@ class JudgeGameCommand(
     private fun commandNotImplemented(ctx: CommandContext<FabricClientCommandSource>): Int {
         ctx.source.sendError(Text.of("Not yet implemented"))
         return -999
+    }
+
+    companion object {
+        fun warningClickCommand(isCreative: Boolean, warning: GameWarning): String {
+            return if (isCreative) {
+                "/tp @s ${warning.position.x} ${warning.position.y} ${warning.position.z}"
+            } else {
+                "/bridges highlightWarning ${warning.id}"
+            }
+        }
     }
 
 }

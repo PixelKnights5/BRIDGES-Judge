@@ -176,7 +176,7 @@ class ConnectionTest {
         floor1.centerNode().connections += ladder
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         assertTrue(floor0 in path.floors, "floor0 should be in path")
         assertTrue(floor1 in path.floors, "floor1 should be in path")
@@ -194,7 +194,7 @@ class ConnectionTest {
         floor1.centerNode().connections += ladder
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         assertTrue(floor0.isCaptureValidated == true, "floor0 should be capture-validated")
         assertTrue(floor1.isCaptureValidated == true, "floor1 should be capture-validated")
@@ -218,7 +218,7 @@ class ConnectionTest {
         floor0.perimeterNode(NodeSide.N).connections += brokenBridge
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         // Only floor0 is reachable; the broken bridge leads nowhere
         assertEquals(setOf(floor0), path.floors)
@@ -232,7 +232,7 @@ class ConnectionTest {
         // No ladder or bridge added — floor1 is isolated
 
         val path = Path(pathOwner = GameColor.ORANGE, scoring = stubScoring)
-        path.buildPath(floor0, listOf(tower), mutableListOf())
+        path.buildPath(floor0, listOf(tower))
 
         assertTrue(floor0 in path.floors)
         assertFalse(floor1 in path.floors, "floor1 has no connection so should not be reachable")

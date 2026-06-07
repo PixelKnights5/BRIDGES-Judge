@@ -14,10 +14,16 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.math.PI
 
-data class WarningIcon(val position: BlockPos, val color: Color)
+data class GameWarning(
+    val position: BlockPos,
+    val color: Color,
+    val message: String,
+    val id: Int = 0,
+    var isVisible: Boolean = true,
+)
 
 class WarningIconRenderer : KoinComponent {
-    val warnings: MutableSet<WarningIcon> = mutableSetOf()
+    val warnings: MutableSet<GameWarning> = mutableSetOf()
 
     private val config: ModConfig by inject()
 
@@ -39,6 +45,9 @@ class WarningIconRenderer : KoinComponent {
         val angleRad = ((System.currentTimeMillis() % ROTATION_PERIOD_MS).toFloat() / ROTATION_PERIOD_MS) * TWO_PI
 
         for (warning in warnings) {
+            if (!warning.isVisible) {
+                continue
+            }
             val pos = warning.position
             val light = WorldRenderer.getLightmapCoordinates(world, pos)
             val lights = intArrayOf(light, light, light, light)
