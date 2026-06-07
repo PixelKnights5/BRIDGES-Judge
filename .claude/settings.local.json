@@ -20,7 +20,17 @@
       "mcp__idea__search_in_files_by_text",
       "mcp__idea__read_file",
       "mcp__idea__list_directory_tree",
-      "mcp__idea__get_file_text_by_path"
+      "mcp__idea__get_file_text_by_path",
+      "mcp__idea__find_files_by_glob",
+      "mcp__idea__xdebug_set_breakpoint",
+      "mcp__idea__xdebug_get_debugger_status",
+      "mcp__idea__xdebug_get_frame_values",
+      "mcp__idea__xdebug_control_session",
+      "mcp__idea__xdebug_remove_breakpoint",
+      "mcp__idea__xdebug_evaluate_expression",
+      "mcp__idea__get_run_configurations",
+      "mcp__idea__xdebug_start_debugger_session",
+      "mcp__idea__xdebug_list_breakpoints"
     ]
   }
 }
