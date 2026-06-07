@@ -158,7 +158,7 @@ class BridgeTemplate(
             }, Vec3i(10, 0, 6), true)
             coreBridges.add(twoStepDiagonal)
 
-            // There are 4 3-step bridge options.
+            // There are 4 3-step "normal" bridge options.
             var threeStepDiagonal = BridgeTemplate((0 until 15).map {
                 Vec3i((it/3)+1, 0, it+1)
             }, Vec3i(6, 0, 16), true)
@@ -178,6 +178,18 @@ class BridgeTemplate(
                 Vec3i(it, 0, (-it/3)+1)
             }, Vec3i(16, 0, -6), true)
             coreBridges.add(threeStepDiagonal)
+
+            // Handle inside -> outside 3-step bridge option
+            threeStepDiagonal = BridgeTemplate((0 until 15).map {
+                Vec3i(it, 0, (it/3)+1)
+            }, Vec3i(14, 0, 6), true)
+            coreBridges.add(threeStepDiagonal)
+
+            threeStepDiagonal = BridgeTemplate((0 until 15).map {
+                Vec3i(-it, 0, (it/3)+1)
+            }, Vec3i(-14, 0, 6), true)
+            coreBridges.add(threeStepDiagonal)
+
 
             val translationVector = Vec3i(2, 0, 2)
             val floorSpaceBridges = coreBridges.map { bridgeTemplate ->
