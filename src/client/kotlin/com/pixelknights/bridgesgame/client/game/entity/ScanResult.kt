@@ -3,7 +3,7 @@ package com.pixelknights.bridgesgame.client.game.entity
 import com.pixelknights.bridgesgame.client.render.HoveringText
 import com.pixelknights.bridgesgame.client.render.RenderedDot
 import com.pixelknights.bridgesgame.client.render.RenderedLine
-import com.pixelknights.bridgesgame.client.render.WarningIcon
+import com.pixelknights.bridgesgame.client.render.GameWarning
 
 data class ScanResult(
     val towers: MutableList<MutableList<Tower>>,
@@ -15,6 +15,5 @@ data class ScanResult(
     val linesToRender: List<RenderedLine>,
     val dotsToRender: List<RenderedDot>,
     val textsToRender: List<HoveringText>,
-    val warnings: List<WarningIcon>,
-    val errors: List<String>,
+    val warnings: List<GameWarning>,
 )

@@ -1,5 +1,6 @@
 package com.pixelknights.bridgesgame.client.command
 
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.pixelknights.bridgesgame.client.command.util.ArrayCompletionProvider
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument
@@ -18,15 +19,24 @@ class CommandRegistry(
     private fun registerJudgeGameCommand() {
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
             dispatcher.register(
-                literal("bridges").then (
-                    argument("action", StringArgumentType.string())
-                        .suggests(ArrayCompletionProvider(
-                            "scan", "setCenterTower", "clear", "showPathLines", "hidePathLines", "showTowerText",
-                            "hideTowerText")
-                        )
-                        .executes(judgeGameCommand)
-                )
-
+                literal("bridges")
+                    .then(
+                        argument("action", StringArgumentType.string())
+                            .suggests(ArrayCompletionProvider(
+                                "scan", "setCenterTower", "clear",
+                                "showPathLines", "hidePathLines",
+                                "showTowerText", "hideTowerText",
+                                "showWarnings", "hideWarnings",
+                            ))
+                            .executes(judgeGameCommand)
+                    )
+                    .then(
+                        literal("highlightWarning")
+                            .then(
+                                argument("warningId", IntegerArgumentType.integer())
+                                    .executes(judgeGameCommand)
+                            )
+                    )
                     .executes(judgeGameCommand)
             )
         }
