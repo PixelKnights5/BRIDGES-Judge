@@ -40,6 +40,12 @@ class BridgeScanner (
             val segment = ConnectionSegment(node.worldPosition, node.worldPosition + template.targetNodeOffset)
             val endNode = allNodes.filter { it.worldPosition == segment.end }
 
+            // No node at all at the target position means the corner template is matching blocks
+            // that belong to a nearby bridge — not a real connection.
+            if (endNode.isEmpty()) {
+                return@map null
+            }
+
             if (!node.isOpen) {
                 errors += ConnectionError.BRIDGE_TO_CLOSED_NODE
                 // If the target is open, this bridge is already detected from the open side — skip to avoid double-reporting.
