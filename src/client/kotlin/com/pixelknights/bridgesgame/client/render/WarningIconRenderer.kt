@@ -28,6 +28,7 @@ class WarningIconRenderer : KoinComponent {
 
     private val config: ModConfig by inject()
     private val renderUtils: RenderUtils by inject()
+    private val mc: MinecraftClient by inject()
 
     fun renderWarnings(context: WorldRenderContext) {
         if ((!config.playerSettings.showBridgePaths) || (!renderUtils.shouldRender)) {
@@ -37,7 +38,7 @@ class WarningIconRenderer : KoinComponent {
         val matrices = context.matrices()
         val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers()
-        val world = MinecraftClient.getInstance().world ?: return
+        val world = mc.world ?: return
 
         val model = BridgesModels.bakedWarningIcon() ?: return
         val parts = model.getParts(RANDOM)

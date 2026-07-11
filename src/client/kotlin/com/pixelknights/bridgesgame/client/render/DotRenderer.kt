@@ -18,6 +18,7 @@ class DotRenderer : KoinComponent {
 
     val config: ModConfig by inject()
     private val renderUtils: RenderUtils by inject()
+    private val mc: MinecraftClient by inject()
 
     fun renderDots(context: WorldRenderContext) {
         if (!config.playerSettings.showBridgePaths || !renderUtils.shouldRender) {
@@ -27,7 +28,7 @@ class DotRenderer : KoinComponent {
         val matrices = context.matrices()
         val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers() ?: return
-        val world = MinecraftClient.getInstance().world ?: return
+        val world = mc.world ?: return
 
         val model = BridgesModels.bakedDot() ?: return
         val parts = model.getParts(RANDOM)

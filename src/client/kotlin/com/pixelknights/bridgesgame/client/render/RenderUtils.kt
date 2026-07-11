@@ -9,7 +9,6 @@ import kotlin.getValue
 
 class RenderUtils : KoinComponent {
 
-    private val config: ModConfig by inject()
     private val client: MinecraftClient by inject()
 
     val shouldRender: Boolean

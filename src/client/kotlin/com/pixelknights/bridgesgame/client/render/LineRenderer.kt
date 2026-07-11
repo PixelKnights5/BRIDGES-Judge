@@ -25,7 +25,7 @@ class LineRenderer : KoinComponent {
 
     val config: ModConfig by inject()
     private val renderUtils: RenderUtils by inject()
-
+    private val mc: MinecraftClient by inject()
 
     fun renderLines(context: WorldRenderContext) {
         if ((!config.playerSettings.showBridgePaths) || (!renderUtils.shouldRender)) {
@@ -35,7 +35,7 @@ class LineRenderer : KoinComponent {
         val matrices = context.matrices()
         val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers() ?: return
-        val world = MinecraftClient.getInstance().world ?: return
+        val world = mc.world ?: return
 
         val startModel = BridgesModels.bakedLineStart() ?: return
         val middleModel = BridgesModels.bakedLineMiddle() ?: return
