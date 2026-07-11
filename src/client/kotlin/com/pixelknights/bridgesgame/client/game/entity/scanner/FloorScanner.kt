@@ -3,7 +3,7 @@ package com.pixelknights.bridgesgame.client.game.entity.scanner
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
-import com.pixelknights.bridgesgame.client.util.getTeamColorsForBannerLayers
+import com.pixelknights.bridgesgame.client.util.getTeamColorForDye
 import com.pixelknights.bridgesgame.client.util.plus
 import com.pixelknights.bridgesgame.client.util.times
 import net.minecraft.block.entity.BannerBlockEntity
@@ -69,20 +69,13 @@ class FloorScanner(
     }
 
     /**
-     * Break banners are black banners with a team-colored pattern placed at the node's world position,
-     * marking a previously closed node as re-opened. The team is read from the banner's pattern layers,
-     * not the (always black) banner block itself.
+     * Break banners are team-colored banners (e.g. a red banner) placed at the node's world position,
+     * marking a previously closed node as re-opened. The team is read from the banner block's own
+     * base color; any patterns on the banner are decorative and ignored.
      */
     private fun getBrokenTeam(nodePos: BlockPos): GameColor? {
         val bannerEntity = mc.world?.getBlockEntity(nodePos) as? BannerBlockEntity ?: return null
-        val teamColors = getTeamColorsForBannerLayers(bannerEntity.patterns.layers().map { it.color() })
-
-        if (teamColors.size > 1) {
-            logger.warn("The break banner at ($nodePos) has patterns from multiple teams.")
-            return null
-        }
-
-        return teamColors.firstOrNull()
+        return getTeamColorForDye(bannerEntity.colorForState)
     }
 
     /**

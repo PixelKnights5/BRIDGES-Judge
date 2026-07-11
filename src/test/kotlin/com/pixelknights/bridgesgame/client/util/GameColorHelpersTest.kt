@@ -30,24 +30,4 @@ class GameColorHelpersTest {
         assertNull(getTeamColorForDye(DyeColor.WHITE))
         assertNull(getTeamColorForDye(null))
     }
-
-    @Test
-    fun `banner layers ignore the black base and resolve a single team`() {
-        assertEquals(setOf(GameColor.RED), getTeamColorsForBannerLayers(listOf(DyeColor.BLACK, DyeColor.RED)))
-    }
-
-    @Test
-    fun `banner layers with no team dye resolve to no team`() {
-        assertEquals(emptySet(), getTeamColorsForBannerLayers(listOf(DyeColor.BLACK)))
-    }
-
-    @Test
-    fun `repeated layers from the same team still resolve to one team`() {
-        assertEquals(setOf(GameColor.RED), getTeamColorsForBannerLayers(listOf(DyeColor.RED, DyeColor.RED)))
-    }
-
-    @Test
-    fun `banner layers from two different teams are ambiguous`() {
-        assertEquals(setOf(GameColor.RED, GameColor.GREEN), getTeamColorsForBannerLayers(listOf(DyeColor.RED, DyeColor.LIME)))
-    }
 }

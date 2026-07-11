@@ -23,8 +23,9 @@ fun getTeamColorForBlock(block: Block?): GameColor? {
 }
 
 /**
- * Break banners are black banners with a team-colored pattern applied, so the team is identified by
- * dye color rather than by the banner's own (black) block id.
+ * Maps a dye color to its team, for team-colored blocks whose color is exposed as a single
+ * DyeColor rather than encoded in a block id (e.g. a break banner's base color, read via
+ * BannerBlockEntity.getColorForState()). Non-team dyes (including black) resolve to no team.
  */
 fun getTeamColorForDye(dye: DyeColor?): GameColor? {
     if (dye == null) {
@@ -32,10 +33,3 @@ fun getTeamColorForDye(dye: DyeColor?): GameColor? {
     }
     return GameColor.entries.firstOrNull { it.isTeam && it.blockColor == dye.asString() }
 }
-
-/**
- * Distinct team colors referenced by a banner's pattern layers. The black base color and any
- * non-team dye (e.g. plain green, which is not a team color - team green uses lime) are ignored.
- */
-fun getTeamColorsForBannerLayers(patternColors: List<DyeColor>): Set<GameColor> =
-    patternColors.mapNotNull { getTeamColorForDye(it) }.toSet()
