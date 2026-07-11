@@ -3,8 +3,10 @@ package com.pixelknights.bridgesgame.client.game.entity.scanner
 import com.pixelknights.bridgesgame.client.config.ModConfig
 import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
+import com.pixelknights.bridgesgame.client.util.getTeamColorsForBannerLayers
 import com.pixelknights.bridgesgame.client.util.plus
 import com.pixelknights.bridgesgame.client.util.times
+import net.minecraft.block.entity.BannerBlockEntity
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.Logger
@@ -46,14 +48,38 @@ class FloorScanner(
     private fun getNode(floor: Floor, side: NodeSide): Node {
         val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
         // CENTER is the tower interior — not a valid bridge endpoint
-        val isOpen = if (side == NodeSide.CENTER) false else mc.world?.getBlockState(worldCoords)?.isAir ?: false
+        val brokenByTeam = if (side == NodeSide.CENTER) null else getBrokenTeam(worldCoords)
+        // A break banner marks a re-opened node, so it counts as open even though it isn't air.
+        val isOpen = when {
+            side == NodeSide.CENTER -> false
+            brokenByTeam != null -> true
+            else -> mc.world?.getBlockState(worldCoords)?.isAir ?: false
+        }
 
         return Node(
             side = side,
             isOpen = isOpen,
             floor = floor,
             worldPosition = worldCoords,
+            brokenByTeam = brokenByTeam,
         )
+    }
+
+    /**
+     * Break banners are black banners with a team-colored pattern placed at the node's world position,
+     * marking a previously closed node as re-opened. The team is read from the banner's pattern layers,
+     * not the (always black) banner block itself.
+     */
+    private fun getBrokenTeam(nodePos: BlockPos): GameColor? {
+        val bannerEntity = mc.world?.getBlockEntity(nodePos) as? BannerBlockEntity ?: return null
+        val teamColors = getTeamColorsForBannerLayers(bannerEntity.patterns.layers().map { it.color() })
+
+        if (teamColors.size > 1) {
+            logger.warn("The break banner at ($nodePos) has patterns from multiple teams.")
+            return null
+        }
+
+        return teamColors.firstOrNull()
     }
 
     /**

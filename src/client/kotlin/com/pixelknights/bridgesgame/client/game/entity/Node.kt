@@ -23,6 +23,7 @@ data class Node(
     val isOpen: Boolean,
     val floor: Floor,
     val worldPosition: BlockPos,
+    val brokenByTeam: GameColor? = null,
 ) {
     val connections: MutableSet<Connection> = mutableSetOf()
 

@@ -196,9 +196,11 @@ class GameBoard(
             val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
             val floorBlocks = towers.flatten().flatMap { it.floors }.count { it.blockingTeamColor == teamColor }
             val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }
+            val nodeBreaks = towers.flatten().flatMap { it.floors }.flatMap { it.nodes }.count { it.brokenByTeam == teamColor }
             // Scrapes should be added here, but the mod has no "memory" of previous days so this is not possible to count.
 
-            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + towerClaims
+            team.brokenNodes = nodeBreaks
+            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + towerClaims + nodeBreaks
         }
 
         logger.info("Teams = $teams")
@@ -237,6 +239,21 @@ class GameBoard(
                     position = it.worldCenter,
                     color = Color.fromHex(it.blockingTeamColor!!.rgba),
                     message = "Floor ${it.coords} ${it.worldCoords} blocked by ${it.blockingTeamColor} but owned by ${it.owner ?: "no team"}",
+                )
+            }
+
+        // Report nodes broken by a team that does not own the floor
+        towers
+            .asSequence()
+            .flatten()
+            .flatMap { it.floors }
+            .flatMap { it.nodes }
+            .filter { it.brokenByTeam != null && it.brokenByTeam != it.floor.owner }
+            .forEach {
+                warnings += GameWarning(
+                    position = it.worldPosition,
+                    color = Color.fromHex(it.brokenByTeam!!.rgba),
+                    message = "Node ${it.side} on floor ${it.floor.coords} broken by ${it.brokenByTeam} but floor owned by ${it.floor.owner ?: "no team"}",
                 )
             }
 
