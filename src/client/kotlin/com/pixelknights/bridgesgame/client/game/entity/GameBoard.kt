@@ -248,7 +248,7 @@ class GameBoard(
             .flatten()
             .flatMap { it.floors }
             .flatMap { it.nodes }
-            .filter { it.brokenByTeam != null && it.brokenByTeam != it.floor.owner }
+            .filter { it.brokenByTeam != null && !it.isValidBreak }
             .forEach {
                 warnings += GameWarning(
                     position = it.worldPosition,

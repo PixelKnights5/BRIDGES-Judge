@@ -49,10 +49,13 @@ class FloorScanner(
         val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
         // CENTER is the tower interior — not a valid bridge endpoint
         val brokenByTeam = if (side == NodeSide.CENTER) null else getBrokenTeam(worldCoords)
-        // A break banner marks a re-opened node, so it counts as open even though it isn't air.
+        // A break banner re-opens the node only if the breaking team owns the floor.
+        // An illegal break (wrong team, or no team) leaves the node closed so that
+        // bridges into it are still flagged as connecting to a closed node.
+        val isValidBreak = brokenByTeam != null && brokenByTeam == floor.owner
         val isOpen = when {
             side == NodeSide.CENTER -> false
-            brokenByTeam != null -> true
+            isValidBreak -> true
             else -> mc.world?.getBlockState(worldCoords)?.isAir ?: false
         }
 
