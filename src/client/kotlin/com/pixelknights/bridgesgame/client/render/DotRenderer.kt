@@ -17,9 +17,10 @@ class DotRenderer : KoinComponent {
     val dotsToRender: MutableSet<RenderedDot> = mutableSetOf()
 
     val config: ModConfig by inject()
+    private val renderUtils: RenderUtils by inject()
 
     fun renderDots(context: WorldRenderContext) {
-        if (!config.playerSettings.showBridgePaths) {
+        if (!config.playerSettings.showBridgePaths || !renderUtils.shouldRender) {
             return
         }
 

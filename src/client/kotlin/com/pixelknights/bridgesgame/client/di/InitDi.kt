@@ -15,6 +15,7 @@ import com.pixelknights.bridgesgame.client.game.entity.scanner.TowerScanner
 import com.pixelknights.bridgesgame.client.render.DotRenderer
 import com.pixelknights.bridgesgame.client.render.HoveringTextRenderer
 import com.pixelknights.bridgesgame.client.render.LineRenderer
+import com.pixelknights.bridgesgame.client.render.RenderUtils
 import com.pixelknights.bridgesgame.client.render.WarningIconRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -56,6 +57,7 @@ val appModule = module {
     singleOf(::HoveringTextRenderer)
     singleOf(::WarningIconRenderer)
     singleOf(::ScanState)
+    singleOf(::RenderUtils)
     single<CoroutineScope>(named(Scopes.BridgesScanScope)) {
         val dispatcher = Executors.newSingleThreadExecutor { r ->
             Thread(r, "BridgesScanWorker").apply { isDaemon = true }

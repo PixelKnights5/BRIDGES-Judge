@@ -12,6 +12,7 @@ import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.random.Random
+import net.minecraft.world.World
 import org.joml.Matrix3f
 import org.joml.Quaternionf
 import org.koin.core.component.KoinComponent
@@ -23,9 +24,11 @@ class LineRenderer : KoinComponent {
     val linesToRender = mutableSetOf<RenderedLine>()
 
     val config: ModConfig by inject()
+    private val renderUtils: RenderUtils by inject()
+
 
     fun renderLines(context: WorldRenderContext) {
-        if (!config.playerSettings.showBridgePaths) {
+        if ((!config.playerSettings.showBridgePaths) || (!renderUtils.shouldRender)) {
             return
         }
 
