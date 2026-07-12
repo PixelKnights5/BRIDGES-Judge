@@ -11,7 +11,10 @@ object ConnectionValidator {
      * Pairs that share an endpoint node are excluded — those are reported by
      * [findOverloadedNodes] instead.
      */
-    fun findIntersections(connections: Collection<Connection>): List<Intersection> {
+    fun findIntersections(
+        connections: Collection<Connection>,
+        allowCircuitCrossings: Boolean = false,
+    ): List<Intersection> {
         val list = connections.toList()
         val result = mutableListOf<Intersection>()
         for (i in list.indices) {
@@ -19,6 +22,9 @@ object ConnectionValidator {
                 val a = list[i]
                 val b = list[j]
                 if (sharesNode(a, b)) {
+                    continue
+                }
+                if (allowCircuitCrossings && a is Circuit && b is Circuit) {
                     continue
                 }
                 val point = firstCrossingPoint(a, b) ?: continue
@@ -50,11 +56,19 @@ object ConnectionValidator {
      * Returns all nodes that have more than one connection attached and are not exclusively
      * connected to ladders. A CENTER node with ladders going up and down is legitimate, but any
      * node that mixes in a bridge or circuit alongside another connection is flagged.
+     *
+     * When [allowMultiNodeCircuits] is true, a single sculk/vine network is allowed to touch
+     * multiple nodes at once, so nodes whose extra connections are all circuits are no longer
+     * flagged. A node mixing a bridge in with circuits is still flagged.
      */
-    fun findOverloadedNodes(connections: Collection<Connection>): List<Node> {
+    fun findOverloadedNodes(connections: Collection<Connection>, allowMultiNodeCircuits: Boolean = false): List<Node> {
         val allNodes = connections.flatMap { listOfNotNull(it.nodeA, it.nodeB) }.toSet()
         return allNodes.filter { node ->
-            node.connections.size > 1 && node.connections.any { it !is Ladder }
+            if (allowMultiNodeCircuits) {
+                node.connections.size > 1 && node.connections.any { it !is Ladder && it !is Circuit }
+            } else {
+                node.connections.size > 1 && node.connections.any { it !is Ladder }
+            }
         }
     }
 }

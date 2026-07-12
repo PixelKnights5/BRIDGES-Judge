@@ -12,8 +12,10 @@ data class Bridge(
     override val errors: List<ConnectionError> = emptyList()
 ) : Connection {
 
-    override val midpoint: BlockPos = segments.singleOrNull()?.let { seg ->
-        BlockPos((seg.start.x + seg.end.x) / 2, seg.start.y, (seg.start.z + seg.end.z) / 2)
+    // Segments track the real (possibly multi-block, diagonal) glass footprint, not a
+    // single line, so the midpoint is derived from the nodes directly at head height.
+    override val midpoint: BlockPos = nodeB?.let {
+        BlockPos((nodeA.worldPosition.x + it.worldPosition.x) / 2, nodeA.worldPosition.y, (nodeA.worldPosition.z + it.worldPosition.z) / 2)
     } ?: nodeA.worldPosition
 
 

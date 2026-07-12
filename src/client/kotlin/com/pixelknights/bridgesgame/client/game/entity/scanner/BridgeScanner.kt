@@ -8,6 +8,7 @@ import com.pixelknights.bridgesgame.client.game.entity.NodeSide
 import com.pixelknights.bridgesgame.client.game.rules.BridgeTemplate
 import com.pixelknights.bridgesgame.client.util.plus
 import net.minecraft.client.MinecraftClient
+import net.minecraft.util.math.BlockPos
 
 class BridgeScanner (
     private val mc: MinecraftClient,
@@ -37,8 +38,16 @@ class BridgeScanner (
             }
 
             val painter = template.findBridgePainter(mc, node.worldPosition.down(1))
-            val segment = ConnectionSegment(node.worldPosition, node.worldPosition + template.targetNodeOffset)
-            val endNode = allNodes.filter { it.worldPosition == segment.end }
+            val targetPosition = node.worldPosition + template.targetNodeOffset
+            val endNode = allNodes.filter { it.worldPosition == targetPosition }
+
+            // Segments follow the real glass footprint (the same blocks findBridgeOwner
+            // scans), not an idealized node-to-node line. Diagonal formations step through
+            // blocks that aren't face-adjacent, so an idealized straight line can cut
+            // through — or miss — blocks the real bridge doesn't occupy.
+            val segments = template.translate(node.worldPosition.down(2)).blockCoords
+                .map { BlockPos(it) }
+                .zipWithNext { a, b -> ConnectionSegment(a, b) }
 
             // No node at all at the target position means the corner template is matching blocks
             // that belong to a nearby bridge — not a real connection.
@@ -59,7 +68,7 @@ class BridgeScanner (
             }
 
             return@map Bridge(
-                segments = listOf(segment),
+                segments = segments,
                 nodeA = node,
                 nodeB = endNode.firstOrNull { it.isOpen },
                 owner = owner,

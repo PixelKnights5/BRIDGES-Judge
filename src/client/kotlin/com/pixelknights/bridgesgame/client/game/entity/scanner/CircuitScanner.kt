@@ -36,7 +36,7 @@ class CircuitScanner(private val mc: MinecraftClient) {
 
         val visited = linkedSetOf<BlockPos>().also { it += startBlocks }
         val queue = ArrayDeque<BlockPos>().also { it += startBlocks }
-        var endNode: Node? = null
+        val endpoints = linkedSetOf<Node>()
 
         while (queue.isNotEmpty()) {
             val cur = queue.removeFirst()
@@ -53,23 +53,40 @@ class CircuitScanner(private val mc: MinecraftClient) {
                 visited += neighbor
                 queue += neighbor
 
-                endpointAnchors[neighbor]?.takeIf { it != node }?.let { endNode = it }
+                endpointAnchors[neighbor]?.takeIf { it != node }?.let { endpoints += it }
             }
         }
 
-        val errors = if (endNode == null) listOf(ConnectionError.CIRCUIT_TO_CLOSED_NODE) else emptyList()
-        return setOf(
-            Circuit(
-                nodeA = node,
-                nodeB = endNode,
-                segments = blocksToSegments(visited),
-                errors = errors,
-            ),
-        )
+        return buildCircuits(node, endpoints, visited)
     }
 
     companion object {
         private val CIRCUIT_BLOCKS = setOf(Blocks.SCULK, Blocks.TWISTING_VINES, Blocks.TWISTING_VINES_PLANT)
+
+        /**
+         * Builds one [Circuit] per endpoint node reached from [node]'s sculk/vine network.
+         * A network with no reachable endpoint yields a single dangling circuit flagged with
+         * [ConnectionError.CIRCUIT_TO_CLOSED_NODE]. A network touching multiple nodes yields one
+         * circuit per endpoint, all sharing the same [blocks] footprint — the union of these
+         * across every node's scan (plus [Circuit]'s symmetric equals/hashCode) forms the
+         * complete graph over the network's endpoints, regardless of BFS order.
+         */
+        fun buildCircuits(node: Node, endpoints: Set<Node>, blocks: Set<BlockPos>): Set<Circuit> {
+            val segments = blocksToSegments(blocks)
+            if (endpoints.isEmpty()) {
+                return setOf(
+                    Circuit(
+                        nodeA = node,
+                        nodeB = null,
+                        segments = segments,
+                        errors = listOf(ConnectionError.CIRCUIT_TO_CLOSED_NODE),
+                    ),
+                )
+            }
+            return endpoints.map { endpoint ->
+                Circuit(nodeA = node, nodeB = endpoint, segments = segments)
+            }.toSet()
+        }
 
         private fun blocksConnect(a: Block, b: Block, posA: BlockPos, posB: BlockPos): Boolean {
             if (a !in CIRCUIT_BLOCKS || b !in CIRCUIT_BLOCKS) {
