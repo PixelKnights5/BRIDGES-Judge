@@ -1,7 +1,6 @@
 package com.pixelknights.bridgesgame.client.config
 
 import com.pixelknights.bridgesgame.client.MOD_ID
-import com.pixelknights.bridgesgame.client.MOD_LOGGER
 import com.pixelknights.bridgesgame.client.game.entity.GameColor
 import kotlinx.io.IOException
 import net.minecraft.client.MinecraftClient
@@ -23,10 +22,10 @@ class TowerLayoutConfig(
 
 
     init {
-        MOD_LOGGER.info("Initializing TowerLayoutConfig")
+        logger.info("Initializing TowerLayoutConfig")
         loadHeightmap()
         loadColorMap()
-        MOD_LOGGER.info("Finished initializing TowerLayoutConfig")
+        logger.info("Finished initializing TowerLayoutConfig")
 
     }
 

@@ -5,6 +5,7 @@ import com.pixelknights.bridgesgame.client.game.entity.*
 import com.pixelknights.bridgesgame.client.util.getTeamColorForBlock
 import com.pixelknights.bridgesgame.client.util.plus
 import com.pixelknights.bridgesgame.client.util.times
+import net.minecraft.block.entity.BannerBlockEntity
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.Logger
@@ -46,14 +47,37 @@ class FloorScanner(
     private fun getNode(floor: Floor, side: NodeSide): Node {
         val worldCoords = floor.worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
         // CENTER is the tower interior — not a valid bridge endpoint
-        val isOpen = if (side == NodeSide.CENTER) false else mc.world?.getBlockState(worldCoords)?.isAir ?: false
+        val brokenByTeam = if (side == NodeSide.CENTER) null else getBrokenTeam(worldCoords)
+        // A break banner re-opens the node only if the breaking team owns the floor.
+        // An illegal break (wrong team, or no team) leaves the node closed so that
+        // bridges into it are still flagged as connecting to a closed node.
+        val isValidBreak = brokenByTeam != null && brokenByTeam == floor.owner
+        val isOpen = when {
+            side == NodeSide.CENTER -> false
+            isValidBreak -> true
+            else -> mc.world?.getBlockState(worldCoords)?.isAir ?: false
+        }
 
         return Node(
             side = side,
             isOpen = isOpen,
             floor = floor,
             worldPosition = worldCoords,
+            brokenByTeam = brokenByTeam,
         )
+    }
+
+    /**
+     * Break banners are team-colored banners (e.g. a red banner) placed at the node's world position,
+     * marking a previously closed node as re-opened. Any patterns on the banner are decorative and ignored.
+     */
+    private fun getBrokenTeam(nodePos: BlockPos): GameColor? {
+        val world = mc.world ?: return null
+        // A break is marked with a banner; other blocks here aren't breaks.
+        if (world.getBlockEntity(nodePos) !is BannerBlockEntity) {
+            return null
+        }
+        return getTeamColorForBlock(world.getBlockState(nodePos).block)
     }
 
     /**
@@ -67,6 +91,10 @@ class FloorScanner(
             .filter { it != NodeSide.CENTER }
             .mapNotNull { side ->
                 val nodePos = worldCenter + (side.vector * Node.DISTANCE_FROM_CENTER)
+                // A team-colored banner marks a break, not a block — ignore it here.
+                if (mc.world?.getBlockEntity(nodePos) is BannerBlockEntity) {
+                    return@mapNotNull null
+                }
                 getTeamColorForBlock(mc.world?.getBlockState(nodePos)?.block)
             }.toSet()
 

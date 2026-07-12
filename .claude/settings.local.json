@@ -32,7 +32,12 @@
       "mcp__idea__xdebug_start_debugger_session",
       "mcp__idea__xdebug_list_breakpoints",
       "mcp__idea__search_in_files_by_regex",
-      "mcp__idea__search_symbol"
+      "mcp__idea__search_symbol",
+      "Bash(git status *)",
+      "mcp__idea__search_text",
+      "Bash(./gradlew lintKotlin --console=plain)",
+      "Bash(./gradlew --console=plain tasks --all)",
+      "Bash(./gradlew tasks *)"
     ]
   }
 }

@@ -9,6 +9,7 @@ import net.minecraft.client.render.WorldRenderer
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.random.Random
+import net.minecraft.world.World
 import org.joml.Quaternionf
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -26,16 +27,18 @@ class WarningIconRenderer : KoinComponent {
     val warnings: MutableSet<GameWarning> = mutableSetOf()
 
     private val config: ModConfig by inject()
+    private val renderUtils: RenderUtils by inject()
+    private val mc: MinecraftClient by inject()
 
     fun renderWarnings(context: WorldRenderContext) {
-        if (!config.playerSettings.showBridgePaths) {
+        if ((!config.playerSettings.showBridgePaths) || (!renderUtils.shouldRender)) {
             return
         }
 
         val matrices = context.matrices()
         val cameraPos = context.worldState().cameraRenderState.pos
         val vertexConsumers = context.consumers()
-        val world = MinecraftClient.getInstance().world ?: return
+        val world = mc.world ?: return
 
         val model = BridgesModels.bakedWarningIcon() ?: return
         val parts = model.getParts(RANDOM)

@@ -205,27 +205,33 @@ class JudgeGameCommand(
             §l§cRed:
                 Towers: ${gameBoard.teams[GameColor.RED]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.RED]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.RED]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.RED]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.RED]?.brokenNodes ?: "N/A"} §r
             §l§9Blue:
                 Towers: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.LIGHT_BLUE]?.brokenNodes ?: "N/A"} §r
             §l§eYellow:
                 Towers: ${gameBoard.teams[GameColor.YELLOW]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.YELLOW]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.YELLOW]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.YELLOW]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.YELLOW]?.brokenNodes ?: "N/A"} §r
             §l§2Green:
                 Towers: ${gameBoard.teams[GameColor.GREEN]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.GREEN]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.GREEN]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.GREEN]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.GREEN]?.brokenNodes ?: "N/A"} §r
             §l§dPurple:
                 Towers: ${gameBoard.teams[GameColor.PURPLE]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.PURPLE]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.PURPLE]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.PURPLE]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.PURPLE]?.brokenNodes ?: "N/A"} §r
             §l§6Orange:
                 Towers: ${gameBoard.teams[GameColor.ORANGE]?.capturedTowers ?: "N/A"}
                 Points: ${gameBoard.teams[GameColor.ORANGE]?.points ?: "N/A"}
-                Moves: ${gameBoard.teams[GameColor.ORANGE]?.moves ?: "N/A"} §r
+                Moves: ${gameBoard.teams[GameColor.ORANGE]?.moves ?: "N/A"}
+                Broken: ${gameBoard.teams[GameColor.ORANGE]?.brokenNodes ?: "N/A"} §r
 
         """.trimIndent()
         return Text.literal(results)

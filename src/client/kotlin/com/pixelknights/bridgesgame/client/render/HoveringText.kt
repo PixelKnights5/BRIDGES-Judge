@@ -37,10 +37,10 @@ class HoveringTextRenderer(
 ) : KoinComponent {
     val textToRender = mutableListOf<HoveringText>()
     val config: ModConfig by inject()
-
+    private val renderUtils: RenderUtils by inject()
 
     fun renderAllText(context: WorldRenderContext) {
-        if (!config.playerSettings.showTowerState) {
+        if (!config.playerSettings.showTowerState || !renderUtils.shouldRender) {
             return
         }
         val fontHeight = mc.textRenderer.fontHeight * SCALE

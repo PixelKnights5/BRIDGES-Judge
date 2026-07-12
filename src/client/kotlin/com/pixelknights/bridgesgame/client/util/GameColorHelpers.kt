@@ -10,7 +10,7 @@ fun getTeamColorForBlock(block: Block?): GameColor? {
     }
 
     val blockId = Registries.BLOCK.getId(block).toString()
-    if (!blockId.containsAny("glass", "carpet")) {
+    if (!blockId.containsAny("glass", "carpet", "banner")) {
         return null
     }
 

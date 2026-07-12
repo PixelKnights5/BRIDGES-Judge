@@ -23,8 +23,13 @@ data class Node(
     val isOpen: Boolean,
     val floor: Floor,
     val worldPosition: BlockPos,
+    val brokenByTeam: GameColor? = null,
 ) {
     val connections: MutableSet<Connection> = mutableSetOf()
+
+    /** A break is legal only when the team that broke the node owns the floor it sits on. */
+    val isValidBreak: Boolean
+        get() = brokenByTeam != null && brokenByTeam == floor.owner
 
     val coords = "(${worldPosition.x}, ${worldPosition.y}, ${worldPosition.z})"
     val worldCoords = "(${worldPosition.x}, ${worldPosition.y}, ${worldPosition.z})"
