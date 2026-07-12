@@ -82,6 +82,7 @@ data class BoardConfig(
     val towerDiameter: Int = 5,
     val maxGameHeight: Int = 30,
     val maxMisplacedBlockTolerance: Int = 2,
+    val allowCircuitCrossings: Boolean = false,
 )
 
 data class TowerConfig (

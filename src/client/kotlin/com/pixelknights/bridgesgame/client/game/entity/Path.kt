@@ -119,7 +119,12 @@ class Path (
                         RenderedLine(seg.start + facing.vector, seg.end + facing.vector, color)
                     }
                 }
-                is Bridge -> connection.segments.map { seg -> RenderedLine(seg.start, seg.end, color) }
+                is Bridge -> {
+                    // Segments now track the real (possibly diagonal, multi-block) glass
+                    // footprint for intersection detection, not a single visual line. Render
+                    // a clean node-to-node line at head height instead of the footprint.
+                    listOf(RenderedLine(connection.nodeA.worldPosition, connection.nodeB!!.worldPosition, color))
+                }
                 is Circuit -> {
                     // Shared noise vector across all segments so corners connect visually
                     val noiseVec = Vec3d(

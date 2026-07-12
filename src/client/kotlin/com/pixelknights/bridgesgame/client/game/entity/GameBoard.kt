@@ -280,7 +280,7 @@ class GameBoard(
         }
 
         // Report connections that physically cross each other
-        ConnectionValidator.findIntersections(connections).forEach { (a, b, point) ->
+        ConnectionValidator.findIntersections(connections, config.boardConfig.allowCircuitCrossings).forEach { (a, b, point) ->
             warnings += GameWarning(
                 position = warningPosition(point, a, b),
                 color = Color.WHITE,
@@ -362,9 +362,11 @@ class GameBoard(
         return result
     }
 
-    // Circuit segments run through solid blocks, so shift the icon up one block to stay visible.
+    // Bridge and Circuit segments both track real block positions (the glass floor / sculk
+    // path), not the node's head-height reference, so shift the icon up one block to stay
+    // visible instead of rendering inside a solid block.
     private fun warningPosition(pos: BlockPos, vararg connections: Connection): BlockPos {
-        return if (connections.any { it is Circuit }) pos.up() else pos
+        return if (connections.any { it is Circuit || it is Bridge }) pos.up() else pos
     }
 
 }

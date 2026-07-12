@@ -11,7 +11,10 @@ object ConnectionValidator {
      * Pairs that share an endpoint node are excluded — those are reported by
      * [findOverloadedNodes] instead.
      */
-    fun findIntersections(connections: Collection<Connection>): List<Intersection> {
+    fun findIntersections(
+        connections: Collection<Connection>,
+        allowCircuitCrossings: Boolean = false,
+    ): List<Intersection> {
         val list = connections.toList()
         val result = mutableListOf<Intersection>()
         for (i in list.indices) {
@@ -19,6 +22,9 @@ object ConnectionValidator {
                 val a = list[i]
                 val b = list[j]
                 if (sharesNode(a, b)) {
+                    continue
+                }
+                if (allowCircuitCrossings && a is Circuit && b is Circuit) {
                     continue
                 }
                 val point = firstCrossingPoint(a, b) ?: continue
