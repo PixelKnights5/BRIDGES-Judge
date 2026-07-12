@@ -56,11 +56,19 @@ object ConnectionValidator {
      * Returns all nodes that have more than one connection attached and are not exclusively
      * connected to ladders. A CENTER node with ladders going up and down is legitimate, but any
      * node that mixes in a bridge or circuit alongside another connection is flagged.
+     *
+     * When [allowMultiNodeCircuits] is true, a single sculk/vine network is allowed to touch
+     * multiple nodes at once, so nodes whose extra connections are all circuits are no longer
+     * flagged. A node mixing a bridge in with circuits is still flagged.
      */
-    fun findOverloadedNodes(connections: Collection<Connection>): List<Node> {
+    fun findOverloadedNodes(connections: Collection<Connection>, allowMultiNodeCircuits: Boolean = false): List<Node> {
         val allNodes = connections.flatMap { listOfNotNull(it.nodeA, it.nodeB) }.toSet()
         return allNodes.filter { node ->
-            node.connections.size > 1 && node.connections.any { it !is Ladder }
+            if (allowMultiNodeCircuits) {
+                node.connections.size > 1 && node.connections.any { it !is Ladder && it !is Circuit }
+            } else {
+                node.connections.size > 1 && node.connections.any { it !is Ladder }
+            }
         }
     }
 }

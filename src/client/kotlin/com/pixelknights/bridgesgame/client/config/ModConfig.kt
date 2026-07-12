@@ -82,7 +82,9 @@ data class BoardConfig(
     val towerDiameter: Int = 5,
     val maxGameHeight: Int = 30,
     val maxMisplacedBlockTolerance: Int = 2,
-    val allowCircuitCrossings: Boolean = false,
+    // Season 11 Round 2 rule: circuits may cross each other and a single circuit network may
+    // connect to multiple nodes at once. Both behaviors are gated by this one flag.
+    val allowCircuitCrossings: Boolean = true,
 )
 
 data class TowerConfig (

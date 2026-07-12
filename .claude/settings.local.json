@@ -38,7 +38,6 @@
       "Bash(./gradlew lintKotlin --console=plain)",
       "Bash(./gradlew --console=plain tasks --all)",
       "Bash(./gradlew tasks *)",
-      "mcp__idea__get_symbol_info"
-    ]
+      "mcp__idea__get_symbol_info"]
   }
 }

@@ -259,4 +259,55 @@ class ConnectionValidatorTest {
 
         assertTrue(overloaded.contains(mixedNode))
     }
+
+    @Test
+    fun `findOverloadedNodes flags a node with two circuits by default`() {
+        val shared = makeNode(0, 0, 0, NodeSide.N)
+        val end1 = makeNode(4, 0, 0, NodeSide.S)
+        val end2 = makeNode(0, 0, 4, NodeSide.E)
+
+        val circuitA = circuit(shared, end1, ConnectionSegment(shared.worldPosition, end1.worldPosition))
+        val circuitB = circuit(shared, end2, ConnectionSegment(shared.worldPosition, end2.worldPosition))
+        register(circuitA)
+        register(circuitB)
+
+        val overloaded = ConnectionValidator.findOverloadedNodes(listOf(circuitA, circuitB))
+
+        assertTrue(overloaded.contains(shared))
+    }
+
+    @Test
+    fun `findOverloadedNodes does not flag a node with two circuits when allowMultiNodeCircuits is true`() {
+        val shared = makeNode(0, 0, 0, NodeSide.N)
+        val end1 = makeNode(4, 0, 0, NodeSide.S)
+        val end2 = makeNode(0, 0, 4, NodeSide.E)
+
+        val circuitA = circuit(shared, end1, ConnectionSegment(shared.worldPosition, end1.worldPosition))
+        val circuitB = circuit(shared, end2, ConnectionSegment(shared.worldPosition, end2.worldPosition))
+        register(circuitA)
+        register(circuitB)
+
+        val overloaded = ConnectionValidator.findOverloadedNodes(
+            listOf(circuitA, circuitB),
+            allowMultiNodeCircuits = true,
+        )
+
+        assertTrue(overloaded.isEmpty())
+    }
+
+    @Test
+    fun `findOverloadedNodes still flags a node with a bridge and a circuit when allowMultiNodeCircuits is true`() {
+        val mixedNode = makeNode(0, 0, 0, NodeSide.N)
+        val bridgeEnd = makeNode(4, 0, 0, NodeSide.S)
+        val circuitEnd = makeNode(0, 0, 4, NodeSide.E)
+
+        val b = bridge(mixedNode, bridgeEnd, ConnectionSegment(mixedNode.worldPosition, bridgeEnd.worldPosition))
+        val c = circuit(mixedNode, circuitEnd, ConnectionSegment(mixedNode.worldPosition, circuitEnd.worldPosition))
+        register(b)
+        register(c)
+
+        val overloaded = ConnectionValidator.findOverloadedNodes(listOf(b, c), allowMultiNodeCircuits = true)
+
+        assertTrue(overloaded.contains(mixedNode))
+    }
 }

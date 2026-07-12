@@ -289,7 +289,7 @@ class GameBoard(
         }
 
         // Report nodes with more than one connection (excluding ladder-only nodes)
-        ConnectionValidator.findOverloadedNodes(connections).forEach { node ->
+        ConnectionValidator.findOverloadedNodes(connections, config.boardConfig.allowCircuitCrossings).forEach { node ->
             warnings += GameWarning(
                 position = node.worldPosition,
                 color = Color.WHITE,
@@ -304,7 +304,7 @@ class GameBoard(
     ) {
         paths += GameColor.entries
             .filter { it.isTeam }
-            .map { team -> Path(team, towerScoring) }
+            .map { team -> Path(team, towerScoring, config.boardConfig.allowCircuitCrossings) }
             .toList()
 
         val allTowers = towers.asSequence().flatten()
