@@ -164,16 +164,10 @@ class GameBoard(
     ) {
         logger.info("Validating game...")
 
-        val world = mc.world
-        if (world == null) {
-            logger.error("World is null")
-            return
-        }
-
         buildTeamPaths(towers, paths)
 
         towers.flatten().forEach { tower ->
-            tower.setCapturingTeam(world, config)
+            tower.setCapturingTeam()
         }
 
         paths.forEach { path ->
@@ -195,12 +189,11 @@ class GameBoard(
             val floorClaims = towers.flatten().flatMap { it.floors }.count { it.captureColor == teamColor }
             val floorPaints = towers.flatten().flatMap { it.floors }.count { it.paintColor == teamColor }
             val floorBlocks = towers.flatten().flatMap { it.floors }.count { it.blockingTeamColor == teamColor }
-            val towerClaims = towers.flatten().count { it.getAttemptedClaimingTeam(world, config) == teamColor }
             val nodeBreaks = towers.flatten().flatMap { it.floors }.flatMap { it.nodes }.count { it.brokenByTeam == teamColor }
             // Scrapes should be added here, but the mod has no "memory" of previous days so this is not possible to count.
 
             team.brokenNodes = nodeBreaks
-            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + towerClaims + nodeBreaks
+            team.moves = numBridgeClaims + numBridgePaints + floorClaims + floorPaints + floorBlocks + nodeBreaks
         }
 
         logger.info("Teams = $teams")

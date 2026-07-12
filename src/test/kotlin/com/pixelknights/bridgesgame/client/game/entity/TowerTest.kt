@@ -53,6 +53,70 @@ class TowerTest {
         assertEquals(expectedCoords, actualCoords)
     }
 
+    @Test
+    fun `tower is captured automatically once all floors are owned and validated by the same team`() {
+        val tower = Tower(row = 0, column = 0, numFloors = 2, color = GameColor.GREY, isBase = false)
+        tower.floors = listOf(
+            floorOwnedBy(tower, floorNumber = 0, team = GameColor.RED, validated = true),
+            floorOwnedBy(tower, floorNumber = 1, team = GameColor.RED, validated = true),
+        )
+
+        tower.setCapturingTeam()
+
+        assertEquals(GameColor.RED, tower.capturingTeam)
+    }
+
+    @Test
+    fun `tower is not captured when floors are owned by different teams`() {
+        val tower = Tower(row = 0, column = 0, numFloors = 2, color = GameColor.GREY, isBase = false)
+        tower.floors = listOf(
+            floorOwnedBy(tower, floorNumber = 0, team = GameColor.RED, validated = true),
+            floorOwnedBy(tower, floorNumber = 1, team = GameColor.ORANGE, validated = true),
+        )
+
+        tower.setCapturingTeam()
+
+        assertEquals(null, tower.capturingTeam)
+    }
+
+    @Test
+    fun `tower is not captured when a floor owned by the team is not validated`() {
+        val tower = Tower(row = 0, column = 0, numFloors = 2, color = GameColor.GREY, isBase = false)
+        tower.floors = listOf(
+            floorOwnedBy(tower, floorNumber = 0, team = GameColor.RED, validated = true),
+            floorOwnedBy(tower, floorNumber = 1, team = GameColor.RED, validated = false),
+        )
+
+        tower.setCapturingTeam()
+
+        assertEquals(null, tower.capturingTeam)
+    }
+
+    @Test
+    fun `tower is not captured when no floors are claimed`() {
+        val tower = Tower(row = 0, column = 0, numFloors = 2, color = GameColor.GREY, isBase = false)
+        tower.floors = listOf(
+            floorOwnedBy(tower, floorNumber = 0, team = null, validated = false),
+            floorOwnedBy(tower, floorNumber = 1, team = null, validated = false),
+        )
+
+        tower.setCapturingTeam()
+
+        assertEquals(null, tower.capturingTeam)
+    }
+
+    private fun floorOwnedBy(tower: Tower, floorNumber: Int, team: GameColor?, validated: Boolean): Floor {
+        val floor = Floor(
+            floorNumber = floorNumber,
+            tower = tower,
+            worldCenter = BlockPos(0, 0, 0),
+            captureColor = team,
+            isBase = false,
+        )
+        floor.isCaptureValidated = validated
+        return floor
+    }
+
     companion object {
         private val config = ModConfig(
             boardConfig = BoardConfig(
